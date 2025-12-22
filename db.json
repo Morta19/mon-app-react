@@ -1,0 +1,88 @@
+{
+  "formSubmissions": [
+    {
+      "id": "20cf",
+      "nom": "morta",
+      "email": "masmoudi.mortadha@iit.ens.tn",
+      "message": "aaaaaaaaaaa",
+      "priorité": "moyenne",
+      "createdAt": "2025-12-18T15:22:43.714Z",
+      "status": "new"
+    },
+    {
+      "id": "d54b",
+      "nom": "waaaa",
+      "email": "mortadhahassenmasmoudi@gmail.com",
+      "message": "aaaaaaaaaaaaa",
+      "priorité": "haute",
+      "createdAt": "2025-12-21T18:08:48.564Z",
+      "status": "new"
+    }
+  ],
+  "projects": [
+    {
+      "id": "2",
+      "title": "Portfolio 3D Architecture",
+      "description": "Visualisation 3D de façades et d'intérieurs pour clients immobiliers.",
+      "techStack": [
+        "React",
+        "Three.js"
+      ],
+      "githubUrl": "https://github.com/ton-compte/archi-3d",
+      "liveUrl": null,
+      "status": "in-progress"
+    },
+    {
+      "id": "4268",
+      "title": "Flask REST API avec CI/CD Azure DevOps",
+      "description": "API REST professionnelle développée avec Flask et intégrée à Azure DevOps pour la gestion du code source, pipelines CI/CD, conteneurisation Docker et déploiement automatique sur machine virtuelle Azure.",
+      "techStack": [
+        "Flask",
+        "Python",
+        "Docker",
+        "Azure DevOps",
+        "Git",
+        "REST API"
+      ],
+      "status": "offline",
+      "githubUrl": "",
+      "liveUrl": ""
+    },
+    {
+      "id": "5a49",
+      "title": "Jeu Unity 3D – Collecte & Score",
+      "description": "Jeu 3D développé avec Unity où le joueur contrôle une sphère pour collecter des objets, éviter des obstacles et atteindre un objectif final avec système de score, messages de victoire et défaite.",
+      "techStack": [
+        "Unity 3D",
+        "C#",
+        "Physics Engine"
+      ],
+      "status": "offline",
+      "githubUrl": "",
+      "liveUrl": ""
+    }
+  ],
+  "users": [
+    {
+      "id": "1",
+      "email": "morta@morta.com",
+      "password": "morta",
+      "name": "Admin 21C",
+      "role": "admin"
+    },
+    {
+      "id": "2",
+      "email": "user@21c-digital.com",
+      "password": "user123",
+      "name": "User 21C",
+      "role": "user"
+    }
+  ],
+  "profile": {
+    "name": "Mortadha Masmoudi",
+    "role": "Développeur Full-Stack",
+    "avatar": "https://votre-image.com/photo.jpg",
+    "bio": "Passionné par le design et le code...",
+    "email": "mortadhahassenmasmoudi@gmail.com"
+  }
+}

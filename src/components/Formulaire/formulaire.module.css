@@ -1,0 +1,33 @@
+.contaner{
+    display: flex;
+    padding: 10%;
+    margin: auto   ;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    width: 100%;
+    background-color: #f0f0f0;
+}
+.formulaire{
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 100px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    background-color: #ffffff;
+}
+.successmessage{
+    color: green;
+    font-weight: bold;
+}
+.MessageValide{
+    border: 2px solid green;
+}
+.MessageInvalide{
+    border: 2px solid red;
+}
+.errormessage{
+    color: red;
+    font-size: 12px;
+}
