@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   FaUser,
   FaEnvelope,
@@ -10,7 +10,10 @@ import {
   FaMapMarkerAlt,
 } from "react-icons/fa";
 import { sendEmail } from "../../emailService";
-import { createFormSubmission } from "../api/formSubmissionsApi"; // Import de l'API locale
+
+// URL DE VOTRE MOCKAPI
+const MOCK_API_URL =
+  "https://69497e321282f890d2d65641.mockapi.io/api/v1/formSubmissions";
 
 const ContactForm = () => {
   const [formValid, setFormValid] = useState({
@@ -36,7 +39,6 @@ const ContactForm = () => {
     message: false,
   });
 
-  // Fonction de validation simplifiée
   const validate = (data) => {
     const isNomValid = data.nom.trim().length >= 3;
     const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email);
@@ -55,7 +57,6 @@ const ContactForm = () => {
     const newFormData = { ...formData, [name]: value };
     setFormData(newFormData);
 
-    // Mise à jour temps réel de l'état du bouton d'envoi
     const checks = validate(newFormData);
     setFormValid((prev) => ({
       ...prev,
@@ -79,10 +80,22 @@ const ContactForm = () => {
     setFormValid((prev) => ({ ...prev, sending: true }));
 
     try {
-      // 1. Sauvegarde locale (Remplace MockAPI)
-      await createFormSubmission(formData);
+      // ✅ 1. SAUVEGARDE SUR MOCKAPI (Remplace localhost/localStorage)
+      const response = await fetch(MOCK_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.nom, // MockAPI attend souvent 'name'
+          email: formData.email,
+          message: formData.message,
+          priority: formData.priorité,
+          createdAt: new Date().toISOString(),
+        }),
+      });
 
-      // 2. Envoi de l'email via EmailJS
+      if (!response.ok) throw new Error("Erreur MockAPI");
+
+      // 2. ENVOI DE L'EMAIL
       try {
         await sendEmail({
           from_name: formData.nom,
@@ -91,12 +104,10 @@ const ContactForm = () => {
           priority: formData.priorité,
         });
       } catch (emailErr) {
-        console.warn(
-          "EmailJS non configuré ou erreur, mais message sauvé localement."
-        );
+        console.warn("EmailJS erreur, mais sauvé sur MockAPI.");
       }
 
-      // 3. Effet visuel de succès
+      // 3. SUCCÈS VISUEL
       setFormValid((prev) => ({
         ...prev,
         sended: true,
@@ -104,24 +115,21 @@ const ContactForm = () => {
         send: false,
       }));
 
-      // Réinitialisation du formulaire
       setFormData({ nom: "", email: "", message: "", priorité: "moyenne" });
       setTouched({ nom: false, email: false, message: false });
 
-      // Masquer le message de succès après 5 secondes
       setTimeout(() => {
         setFormValid((prev) => ({ ...prev, sended: false }));
       }, 5000);
     } catch (error) {
       console.error("Erreur critique :", error);
       setFormValid((prev) => ({ ...prev, sending: false }));
-      alert("Une erreur est survenue lors de l'enregistrement.");
+      alert("Impossible d'envoyer le message. Vérifiez votre connexion.");
     }
   };
 
   return (
     <section className="bg-[#08080a] text-white py-24 relative overflow-hidden">
-      {/* Glow Effect */}
       <div className="absolute top-0 left-[-10%] w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px] -z-0"></div>
 
       <div className="max-w-7xl mx-auto px-6 relative z-10">
@@ -138,7 +146,6 @@ const ContactForm = () => {
         </div>
 
         <div className="grid lg:grid-cols-12 gap-12 items-start">
-          {/* Sidebar Infos */}
           <div className="lg:col-span-4 space-y-6">
             <div className="bg-zinc-900/50 border border-white/5 p-8 rounded-[2rem] backdrop-blur-xl">
               <h4 className="text-xl font-bold mb-8 italic">
@@ -153,7 +160,7 @@ const ContactForm = () => {
                     <p className="text-xs text-zinc-500 uppercase font-bold tracking-widest">
                       Email
                     </p>
-                    <p className="text-sm font-medium">
+                    <p className="text-sm font-medium break-all">
                       mortadhahassenmasmoudi@gmail.com
                     </p>
                   </div>
@@ -184,7 +191,6 @@ const ContactForm = () => {
             </div>
           </div>
 
-          {/* Form Card */}
           <div className="lg:col-span-8 bg-zinc-900/30 border border-white/10 rounded-[2.5rem] p-8 md:p-12 backdrop-blur-xl relative">
             {formValid.sended && (
               <div className="absolute inset-0 bg-[#08080a]/95 z-50 rounded-[2.5rem] flex flex-col items-center justify-center text-center p-8">
@@ -297,7 +303,7 @@ const ContactForm = () => {
                   disabled={!formValid.send || formValid.sending}
                   className={`relative px-12 py-4 rounded-full font-bold transition-all duration-300 ${
                     formValid.send && !formValid.sending
-                      ? "bg-white text-black shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:scale-105 active:scale-95"
+                      ? "bg-white text-black shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:scale-105"
                       : "bg-zinc-800 text-zinc-500 cursor-not-allowed"
                   }`}
                 >
@@ -309,18 +315,6 @@ const ContactForm = () => {
                   </span>
                 </button>
               </div>
-
-              {/* Error Helper */}
-              {((touched.nom && !formValid.nom) ||
-                (touched.email && !formValid.email) ||
-                (touched.message && !formValid.message)) && (
-                <div className="flex items-center gap-2 text-red-400 text-xs font-medium animate-pulse">
-                  <FaExclamationTriangle />
-                  <span>
-                    Veuillez compléter correctement tous les champs requis.
-                  </span>
-                </div>
-              )}
             </form>
           </div>
         </div>
