@@ -10,7 +10,7 @@ import {
   FaMapMarkerAlt,
 } from "react-icons/fa";
 import { sendEmail } from "../../emailService";
-import { createFormSubmission } from "../api/formSubmissionsApi.js";
+import { createFormSubmission } from "../api/formSubmissionsApi"; // Import de l'API locale
 
 const ContactForm = () => {
   const [formValid, setFormValid] = useState({
@@ -22,12 +22,6 @@ const ContactForm = () => {
     sended: false,
     sending: false,
   });
-
-  const errorMessage = {
-    nom: "Le nom doit contenir au moins 3 caractères",
-    email: "Merci d'entrer un email valide",
-    message: "Le message doit contenir au moins 10 caractères",
-  };
 
   const [formData, setFormData] = useState({
     nom: "",
@@ -42,77 +36,95 @@ const ContactForm = () => {
     message: false,
   });
 
-  const verificationFormulaire = () => {
-    const newValidState = {
-      nom: formData.nom.length > 3,
-      email: formData.email.includes("@") && formData.email.includes("."),
-      message: formData.message.length > 10,
-      priorité: true,
+  // Fonction de validation simplifiée
+  const validate = (data) => {
+    const isNomValid = data.nom.trim().length >= 3;
+    const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email);
+    const isMessageValid = data.message.trim().length >= 10;
+
+    return {
+      nom: isNomValid,
+      email: isEmailValid,
+      message: isMessageValid,
+      all: isNomValid && isEmailValid && isMessageValid,
     };
-
-    const allValid =
-      newValidState.nom && newValidState.email && newValidState.message;
-
-    setFormValid({
-      ...formValid,
-      ...newValidState,
-      send: allValid,
-    });
-
-    return allValid;
   };
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-    if (touched[e.target.name]) {
-      setTimeout(() => verificationFormulaire(), 100);
-    }
+    const { name, value } = e.target;
+    const newFormData = { ...formData, [name]: value };
+    setFormData(newFormData);
+
+    // Mise à jour temps réel de l'état du bouton d'envoi
+    const checks = validate(newFormData);
+    setFormValid((prev) => ({
+      ...prev,
+      nom: checks.nom,
+      email: checks.email,
+      message: checks.message,
+      send: checks.all,
+    }));
   };
 
   const handleBlur = (fieldName) => {
     setTouched({ ...touched, [fieldName]: true });
-    verificationFormulaire();
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!verificationFormulaire()) return;
-    await createFormSubmission({
-      ...formData,
-      createdAt: new Date().toISOString(),
-      status: "new", // new | in-progress | done
-    });
 
-    setFormValid({ ...formValid, sending: true });
+    const checks = validate(formData);
+    if (!checks.all) return;
+
+    setFormValid((prev) => ({ ...prev, sending: true }));
 
     try {
-      await sendEmail({
-        from_name: formData.nom,
-        reply_to: formData.email,
-        message: formData.message,
-      });
+      // 1. Sauvegarde locale (Remplace MockAPI)
+      await createFormSubmission(formData);
 
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      setFormValid({ ...formValid, sended: true, sending: false });
+      // 2. Envoi de l'email via EmailJS
+      try {
+        await sendEmail({
+          from_name: formData.nom,
+          reply_to: formData.email,
+          message: formData.message,
+          priority: formData.priorité,
+        });
+      } catch (emailErr) {
+        console.warn(
+          "EmailJS non configuré ou erreur, mais message sauvé localement."
+        );
+      }
 
+      // 3. Effet visuel de succès
+      setFormValid((prev) => ({
+        ...prev,
+        sended: true,
+        sending: false,
+        send: false,
+      }));
+
+      // Réinitialisation du formulaire
       setFormData({ nom: "", email: "", message: "", priorité: "moyenne" });
       setTouched({ nom: false, email: false, message: false });
 
+      // Masquer le message de succès après 5 secondes
       setTimeout(() => {
-        setFormValid((prev) => ({ ...prev, sended: false, send: false }));
+        setFormValid((prev) => ({ ...prev, sended: false }));
       }, 5000);
     } catch (error) {
-      setFormValid({ ...formValid, sending: false });
+      console.error("Erreur critique :", error);
+      setFormValid((prev) => ({ ...prev, sending: false }));
+      alert("Une erreur est survenue lors de l'enregistrement.");
     }
   };
 
   return (
     <section className="bg-[#08080a] text-white py-24 relative overflow-hidden">
-      {/* Background Decor */}
+      {/* Glow Effect */}
       <div className="absolute top-0 left-[-10%] w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px] -z-0"></div>
 
       <div className="max-w-7xl mx-auto px-6 relative z-10">
-        {/* --- HEADER --- */}
         <div className="text-center mb-20">
           <h2 className="text-sm font-mono text-blue-500 uppercase tracking-[0.4em] mb-4">
             Connectons-nous
@@ -126,7 +138,7 @@ const ContactForm = () => {
         </div>
 
         <div className="grid lg:grid-cols-12 gap-12 items-start">
-          {/* --- CONTACT INFO (Side) --- */}
+          {/* Sidebar Infos */}
           <div className="lg:col-span-4 space-y-6">
             <div className="bg-zinc-900/50 border border-white/5 p-8 rounded-[2rem] backdrop-blur-xl">
               <h4 className="text-xl font-bold mb-8 italic">
@@ -170,35 +182,26 @@ const ContactForm = () => {
                 </div>
               </div>
             </div>
-
-            <div className="p-8 rounded-[2rem] bg-gradient-to-br from-blue-600 to-blue-800 hidden md:block">
-              <p className="text-white/80 italic leading-relaxed">
-                "Toujours à la recherche de nouveaux défis techniques et de
-                collaborations innovantes."
-              </p>
-            </div>
           </div>
 
-          {/* --- FORM CONTAINER --- */}
+          {/* Form Card */}
           <div className="lg:col-span-8 bg-zinc-900/30 border border-white/10 rounded-[2.5rem] p-8 md:p-12 backdrop-blur-xl relative">
-            {/* Success Overlay */}
             {formValid.sended && (
-              <div className="absolute inset-0 bg-[#08080a]/90 z-50 rounded-[2.5rem] flex flex-col items-center justify-center text-center p-8 animate-fade-in">
-                <div className="w-24 h-24 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center text-5xl mb-6 animate-bounce">
+              <div className="absolute inset-0 bg-[#08080a]/95 z-50 rounded-[2.5rem] flex flex-col items-center justify-center text-center p-8">
+                <div className="w-24 h-24 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center text-5xl mb-6">
                   <FaCheckCircle />
                 </div>
                 <h3 className="text-3xl font-bold mb-2 text-white">
                   Message Envoyé !
                 </h3>
                 <p className="text-zinc-400">
-                  Merci {formData.nom}, je vous répondrai sous 24h.
+                  Merci, je vous répondrai sous 24h.
                 </p>
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-8">
               <div className="grid md:grid-cols-2 gap-8">
-                {/* Nom */}
                 <div className="space-y-2">
                   <label className="text-xs font-mono text-zinc-500 uppercase tracking-widest ml-1">
                     Nom Complet
@@ -223,7 +226,6 @@ const ContactForm = () => {
                   </div>
                 </div>
 
-                {/* Email */}
                 <div className="space-y-2">
                   <label className="text-xs font-mono text-zinc-500 uppercase tracking-widest ml-1">
                     Email
@@ -249,7 +251,6 @@ const ContactForm = () => {
                 </div>
               </div>
 
-              {/* Message */}
               <div className="space-y-2">
                 <label className="text-xs font-mono text-zinc-500 uppercase tracking-widest ml-1">
                   Votre Projet
@@ -274,14 +275,16 @@ const ContactForm = () => {
                 </div>
               </div>
 
-              {/* Priorité Style Custom */}
               <div className="flex flex-col md:flex-row items-center justify-between gap-6 pt-4">
                 <div className="flex items-center gap-4">
-                  <span className="text-sm text-zinc-500">Priorité :</span>
+                  <span className="text-sm text-zinc-500 font-mono">
+                    Priorité :
+                  </span>
                   <select
                     name="priorité"
+                    value={formData.priorité}
                     onChange={handleChange}
-                    className="bg-zinc-800 border border-white/10 rounded-xl px-4 py-2 text-sm outline-none cursor-pointer hover:bg-zinc-700 transition"
+                    className="bg-[#121214] border border-white/10 rounded-xl px-4 py-2 text-sm outline-none cursor-pointer hover:border-blue-500/50 transition-colors"
                   >
                     <option value="moyenne">Normal</option>
                     <option value="haute">Urgent ⚡</option>
@@ -292,33 +295,32 @@ const ContactForm = () => {
                 <button
                   type="submit"
                   disabled={!formValid.send || formValid.sending}
-                  className={`relative group px-12 py-4 rounded-full font-bold overflow-hidden transition-all ${
+                  className={`relative px-12 py-4 rounded-full font-bold transition-all duration-300 ${
                     formValid.send && !formValid.sending
-                      ? "bg-white text-black hover:pr-14 shadow-[0_0_20px_rgba(255,255,255,0.2)]"
-                      : "bg-zinc-800 text-zinc-500 cursor-not-allowed border border-white/5"
+                      ? "bg-white text-black shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:scale-105 active:scale-95"
+                      : "bg-zinc-800 text-zinc-500 cursor-not-allowed"
                   }`}
                 >
                   <span className="relative z-10 flex items-center gap-3">
-                    {formValid.sending ? "Transmission..." : "Envoyer"}
-                    {!formValid.sending && (
-                      <FaPaperPlane className="text-xs group-hover:translate-x-2 transition-transform" />
-                    )}
+                    {formValid.sending
+                      ? "Envoi en cours..."
+                      : "Envoyer le message"}
+                    {!formValid.sending && <FaPaperPlane className="text-xs" />}
                   </span>
-                  {formValid.sending && (
-                    <div className="absolute inset-0 bg-blue-600 animate-pulse"></div>
-                  )}
                 </button>
               </div>
 
-              {/* Erreurs discrètes */}
-              {(touched.nom && !formValid.nom) ||
-              (touched.email && !formValid.email) ||
-              (touched.message && !formValid.message) ? (
+              {/* Error Helper */}
+              {((touched.nom && !formValid.nom) ||
+                (touched.email && !formValid.email) ||
+                (touched.message && !formValid.message)) && (
                 <div className="flex items-center gap-2 text-red-400 text-xs font-medium animate-pulse">
                   <FaExclamationTriangle />
-                  <span>Veuillez vérifier les champs surlignés en rouge.</span>
+                  <span>
+                    Veuillez compléter correctement tous les champs requis.
+                  </span>
                 </div>
-              ) : null}
+              )}
             </form>
           </div>
         </div>

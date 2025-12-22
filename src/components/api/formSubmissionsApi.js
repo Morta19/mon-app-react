@@ -1,9 +1,22 @@
-import axiosClient from './axios'; 
+// On définit la clé unique pour le stockage dans le navigateur
+const STORAGE_KEY = 'local_submissions';
 
-const RESOURCE = '/formSubmissions';
+// Fonction utilitaire pour lire les données
+const readLocal = () => {
+  const data = localStorage.getItem(STORAGE_KEY);
+  return data ? JSON.parse(data) : [];
+};
+
+// Fonction utilitaire pour écrire les données
+const writeLocal = (data) => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+};
 
 export async function createFormSubmission(payload) {
-  const cleanPayload = {
+  const submissions = readLocal();
+  
+  const newEntry = {
+    id: Date.now().toString(), // Génère un ID unique
     nom: payload.nom || payload.fullName || payload.name, 
     email: payload.email,
     message: payload.message,
@@ -11,22 +24,36 @@ export async function createFormSubmission(payload) {
     status: "new",
     createdAt: new Date().toISOString()
   };
-  const res = await axiosClient.post(RESOURCE, cleanPayload);
-  return res.data;
+
+  const updated = [newEntry, ...submissions];
+  writeLocal(updated);
+  return newEntry;
 }
 
 export async function getFormSubmissions() {
-  const res = await axiosClient.get(RESOURCE);
-  return res.data;
+  // Simule un petit délai réseau pour garder l'effet de chargement (optionnel)
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(readLocal());
+    }, 300);
+  });
 }
 
 export async function updateFormSubmission(id, payload) {
- 
-  const res = await axiosClient.put(`${RESOURCE}/${id}`, payload);
-  return res.data;
+  const submissions = readLocal();
+  const index = submissions.findIndex(s => s.id === id.toString());
+  
+  if (index !== -1) {
+    submissions[index] = { ...submissions[index], ...payload };
+    writeLocal(submissions);
+    return submissions[index];
+  }
+  throw new Error("Message non trouvé");
 }
 
 export async function deleteFormSubmission(id) {
-  await axiosClient.delete(`${RESOURCE}/${id}`);
+  const submissions = readLocal();
+  const filtered = submissions.filter(s => s.id !== id.toString());
+  writeLocal(filtered);
   return true;
 }

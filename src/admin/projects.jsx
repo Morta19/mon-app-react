@@ -11,13 +11,16 @@ import {
   FaCircle,
 } from "react-icons/fa";
 
-const API_URL = "http://localhost:4000/projects";
-
 const AdminProjects = () => {
   const [projects, setProjects] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  // RÉCUPÉRATION DE L'URL DEPUIS .env (Comme dans ProjectsList)
+  const API_BASE = import.meta.env.VITE_API_URL;
+  const API_URL = `${API_BASE}/projects`;
 
   const initialFormState = {
     title: "",
@@ -30,47 +33,58 @@ const AdminProjects = () => {
 
   const [formData, setFormData] = useState(initialFormState);
 
+  // --- CHARGEMENT DES DONNÉES (Logique identique à ProjectsList) ---
   const fetchProjects = async () => {
+    if (!API_BASE) return;
     try {
+      setLoading(true);
       const response = await fetch(API_URL);
+      if (!response.ok) throw new Error("Erreur serveur");
       const data = await response.json();
       setProjects(data);
     } catch (error) {
-      console.error("Erreur chargement:", error);
+      console.error("Erreur Admin Fetch:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchProjects();
-  }, []);
+  }, [API_BASE]);
 
-  // Fermer et Reset
+  // --- ACTIONS ---
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingId(null);
     setFormData(initialFormState);
   };
 
-  // Préparer l'édition
   const handleEditClick = (project) => {
     setEditingId(project.id);
     setFormData({
       ...project,
+      // Sécurisation techStack pour le formulaire (Array -> String)
       techStack: Array.isArray(project.techStack)
         ? project.techStack.join(", ")
-        : project.techStack,
+        : project.techStack || "",
     });
     setIsModalOpen(true);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Transformation String -> Array pour l'API
     const projectToSave = {
       ...formData,
-      techStack: formData.techStack
-        .split(",")
-        .map((s) => s.trim())
-        .filter((s) => s !== ""),
+      techStack:
+        typeof formData.techStack === "string"
+          ? formData.techStack
+              .split(",")
+              .map((s) => s.trim())
+              .filter((s) => s !== "")
+          : formData.techStack,
     };
 
     const method = editingId ? "PUT" : "POST";
@@ -93,29 +107,42 @@ const AdminProjects = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Supprimer ce chef-d'œuvre ?")) {
-      await fetch(`${API_URL}/${id}`, { method: "DELETE" });
-      setProjects(projects.filter((p) => p.id !== id));
+    if (window.confirm("Supprimer définitivement ce projet ?")) {
+      try {
+        await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+        setProjects(projects.filter((p) => p.id !== id));
+      } catch (error) {
+        alert("Erreur lors de la suppression");
+      }
     }
   };
 
+  // --- FILTRAGE ---
   const filteredProjects = useMemo(() => {
     return projects.filter((p) =>
       p.title?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [projects, searchTerm]);
 
+  if (loading && projects.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#050505]">
+        <div className="w-10 h-10 border-2 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-2 sm:p-6 space-y-8 animate-in fade-in duration-700">
+    <div className="p-4 sm:p-8 space-y-8 animate-in fade-in duration-700 bg-[#050505] min-h-screen text-white">
       {/* --- HEADER --- */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 border-b border-white/5 pb-8">
         <div>
-          <h1 className="text-4xl font-black italic tracking-tighter text-white uppercase flex items-center gap-3">
-            <FaLayerGroup className="text-blue-500 text-3xl" />
-            Engine<span className="text-blue-500">.</span>Projects
+          <h1 className="text-4xl font-black italic tracking-tighter uppercase flex items-center gap-3">
+            <FaLayerGroup className="text-blue-500" />
+            Console<span className="text-blue-500">.</span>Admin
           </h1>
-          <p className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.4em] mt-2 ml-1">
-            Gestion du catalogue applicatif
+          <p className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.4em] mt-2">
+            Base de données : {API_BASE ? "Connectée" : "Déconnectée"}
           </p>
         </div>
 
@@ -124,232 +151,181 @@ const AdminProjects = () => {
             <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 group-focus-within:text-blue-500 transition-colors" />
             <input
               type="text"
-              placeholder="FILTRER LES PROJETS..."
+              placeholder="RECHERCHER UN PROJET..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full lg:w-80 bg-[#0d0d0f] border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-[10px] font-bold text-white uppercase tracking-widest focus:outline-none focus:border-blue-500/50 transition-all shadow-2xl"
+              className="w-full lg:w-80 bg-zinc-900/50 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-[10px] font-bold uppercase tracking-widest focus:outline-none focus:border-blue-500/50 transition-all"
             />
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="bg-blue-600 hover:bg-blue-500 text-white p-4 rounded-2xl transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)] active:scale-90"
+            className="bg-blue-600 hover:bg-blue-500 text-white p-4 rounded-2xl transition-all shadow-lg active:scale-95"
           >
             <FaPlus />
           </button>
         </div>
       </div>
 
-      {/* --- GRID DE CARTES (MODERNE) --- */}
+      {/* --- GRID --- */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {filteredProjects.map((project) => (
-          <div
-            key={project.id}
-            className="group relative bg-[#121214] border border-white/5 rounded-[2rem] p-6 hover:border-blue-500/30 transition-all duration-500 overflow-hidden"
-          >
-            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/5 blur-[50px] -mr-10 -mt-10 group-hover:bg-blue-600/10 transition-colors"></div>
+        {filteredProjects.map((project) => {
+          // --- SÉCURISATION TECHSTACK POUR L'AFFICHAGE ---
+          const techArray = Array.isArray(project.techStack)
+            ? project.techStack
+            : typeof project.techStack === "string"
+            ? project.techStack.split(",")
+            : [];
 
-            <div className="flex justify-between items-start mb-6 relative z-10">
-              <span
-                className={`flex items-center gap-2 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter ${
-                  project.status === "online"
-                    ? "bg-emerald-500/10 text-emerald-500"
-                    : "bg-orange-500/10 text-orange-500"
-                }`}
-              >
-                <FaCircle
-                  className={project.status === "online" ? "animate-pulse" : ""}
-                  size={6}
-                />{" "}
-                {project.status}
-              </span>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleEditClick(project)}
-                  className="p-2 bg-white/5 hover:bg-blue-600 text-zinc-400 hover:text-white rounded-xl transition-all"
+          return (
+            <div
+              key={project.id}
+              className="group bg-zinc-900/30 border border-white/5 rounded-[2rem] p-6 hover:border-blue-500/30 transition-all duration-500"
+            >
+              <div className="flex justify-between items-start mb-6">
+                <span
+                  className={`flex items-center gap-2 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter bg-white/5 ${
+                    project.status === "online"
+                      ? "text-green-400"
+                      : "text-blue-400"
+                  }`}
                 >
-                  <FaEdit size={12} />
-                </button>
-                <button
-                  onClick={() => handleDelete(project.id)}
-                  className="p-2 bg-white/5 hover:bg-red-600 text-zinc-400 hover:text-white rounded-xl transition-all"
-                >
-                  <FaTrash size={12} />
-                </button>
+                  <FaCircle
+                    className={
+                      project.status === "online" ? "animate-pulse" : ""
+                    }
+                    size={6}
+                  />
+                  {project.status || "online"}
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleEditClick(project)}
+                    className="p-2 bg-white/5 hover:bg-blue-600 rounded-xl transition-all"
+                  >
+                    <FaEdit size={12} />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(project.id)}
+                    className="p-2 bg-white/5 hover:bg-red-600 rounded-xl transition-all"
+                  >
+                    <FaTrash size={12} />
+                  </button>
+                </div>
+              </div>
+
+              <h3 className="text-xl font-bold uppercase italic tracking-tighter mb-2 group-hover:text-blue-400 transition-colors">
+                {project.title}
+              </h3>
+              <p className="text-zinc-500 text-xs mb-6 line-clamp-2">
+                {project.description}
+              </p>
+
+              <div className="flex flex-wrap gap-2 mb-6">
+                {techArray.map((t, i) => (
+                  <span
+                    key={i}
+                    className="px-2 py-1 bg-white/5 border border-white/5 rounded text-[9px] font-bold text-zinc-400 uppercase"
+                  >
+                    {t.trim()}
+                  </span>
+                ))}
+              </div>
+
+              <div className="flex items-center gap-4 pt-4 border-t border-white/5 text-zinc-500">
+                {project.githubUrl && <FaGithub size={16} />}
+                {project.liveUrl && <FaLink size={16} />}
               </div>
             </div>
-
-            <h3 className="text-xl font-black text-white italic uppercase tracking-tighter mb-2 group-hover:text-blue-400 transition-colors">
-              {project.title}
-            </h3>
-            <p className="text-zinc-500 text-xs leading-relaxed mb-6 line-clamp-2 font-medium">
-              {project.description}
-            </p>
-
-            <div className="flex flex-wrap gap-2 mb-6">
-              {project.techStack?.map((t, i) => (
-                <span
-                  key={i}
-                  className="px-3 py-1 bg-white/5 border border-white/5 text-zinc-400 rounded-lg text-[9px] font-black uppercase tracking-widest group-hover:border-blue-500/20 transition-all"
-                >
-                  {t}
-                </span>
-              ))}
-            </div>
-
-            <div className="flex items-center gap-4 pt-4 border-t border-white/5">
-              <a
-                href={project.githubUrl}
-                target="_blank"
-                className="text-zinc-500 hover:text-white transition-colors"
-              >
-                <FaGithub size={18} />
-              </a>
-              <a
-                href={project.liveUrl}
-                target="_blank"
-                className="text-zinc-500 hover:text-blue-500 transition-colors"
-              >
-                <FaLink size={18} />
-              </a>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
-      {/* --- MODAL DESIGN --- */}
+      {/* --- MODAL --- */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 backdrop-blur-md">
           <div
-            className="absolute inset-0 bg-black/80 backdrop-blur-xl"
+            className="absolute inset-0 bg-black/60"
             onClick={handleCloseModal}
           ></div>
-          <div className="bg-[#0d0d0f] border border-white/10 w-full max-w-2xl rounded-[3rem] p-10 shadow-2xl relative z-10 animate-in zoom-in-95 duration-300 overflow-y-auto max-h-[90vh] custom-scrollbar">
-            <div className="flex justify-between items-center mb-10">
-              <h2 className="text-3xl font-black uppercase italic text-white tracking-tighter">
-                {editingId ? "Éditer le" : "Nouveau"} Projet
-                <span className="text-blue-500">.</span>
+          <div className="bg-[#0d0d0f] border border-white/10 w-full max-w-2xl rounded-[2.5rem] p-8 shadow-2xl relative z-10 animate-in zoom-in-95">
+            <div className="flex justify-between items-center mb-8">
+              <h2 className="text-2xl font-black uppercase italic tracking-tighter">
+                {editingId ? "Éditer" : "Nouveau"} Projet
               </h2>
               <button
                 onClick={handleCloseModal}
-                className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 text-zinc-500 hover:bg-red-500 hover:text-white transition-all"
+                className="text-zinc-500 hover:text-white transition-colors"
               >
-                <FaTimes />
+                <FaTimes size={20} />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="md:col-span-2">
-                  <label className="text-[10px] font-black uppercase text-zinc-500 block mb-3 tracking-[0.2em]">
-                    Nom du Projet
-                  </label>
-                  <input
-                    required
-                    type="text"
-                    value={formData.title}
-                    onChange={(e) =>
-                      setFormData({ ...formData, title: e.target.value })
-                    }
-                    className="w-full bg-white/5 border border-white/5 rounded-2xl py-4 px-6 text-white focus:border-blue-500 outline-none transition-all font-bold"
-                  />
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="text-[10px] font-black uppercase text-zinc-500 block mb-3 tracking-[0.2em]">
-                    Description Narrative
-                  </label>
-                  <textarea
-                    required
-                    rows="3"
-                    value={formData.description}
-                    onChange={(e) =>
-                      setFormData({ ...formData, description: e.target.value })
-                    }
-                    className="w-full bg-white/5 border border-white/5 rounded-2xl py-4 px-6 text-white focus:border-blue-500 outline-none transition-all font-medium text-sm"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[10px] font-black uppercase text-zinc-500 block mb-3 tracking-[0.2em]">
-                    Technologies (Sép. virgule)
-                  </label>
-                  <input
-                    required
-                    type="text"
-                    placeholder="React, Node, Tailwind..."
-                    value={formData.techStack}
-                    onChange={(e) =>
-                      setFormData({ ...formData, techStack: e.target.value })
-                    }
-                    className="w-full bg-white/5 border border-white/5 rounded-2xl py-4 px-6 text-white focus:border-blue-500 outline-none transition-all font-bold"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[10px] font-black uppercase text-zinc-500 block mb-3 tracking-[0.2em]">
-                    Statut Actuel
-                  </label>
-                  <select
-                    value={formData.status}
-                    onChange={(e) =>
-                      setFormData({ ...formData, status: e.target.value })
-                    }
-                    className="w-full bg-white/5 border border-white/5 rounded-2xl py-4 px-6  focus:border-blue-500 outline-none transition-all font-bold appearance-none"
-                  >
-                    <option value="online">● Online / Live</option>
-                    <option value="progress">● In Progress</option>
-                    <option value="offline">● Offline / Paused</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-[10px] font-black uppercase text-zinc-500 block mb-3 tracking-[0.2em]">
-                    Repository GitHub
-                  </label>
-                  <input
-                    type="url"
-                    value={formData.githubUrl}
-                    onChange={(e) =>
-                      setFormData({ ...formData, githubUrl: e.target.value })
-                    }
-                    className="w-full bg-white/5 border border-white/5 rounded-2xl py-4 px-6 text-white focus:border-blue-500 outline-none transition-all font-bold"
-                    placeholder="https://..."
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[10px] font-black uppercase text-zinc-500 block mb-3 tracking-[0.2em]">
-                    Lien Demo
-                  </label>
-                  <input
-                    type="url"
-                    value={formData.liveUrl}
-                    onChange={(e) =>
-                      setFormData({ ...formData, liveUrl: e.target.value })
-                    }
-                    className="w-full bg-white/5 border border-white/5 rounded-2xl py-4 px-6 text-white focus:border-blue-500 outline-none transition-all font-bold"
-                    placeholder="https://..."
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-4 pt-6">
-                <button
-                  type="button"
-                  onClick={handleCloseModal}
-                  className="flex-1 py-5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:bg-white/5 transition-all"
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <input
+                required
+                placeholder="NOM DU PROJET"
+                value={formData.title}
+                onChange={(e) =>
+                  setFormData({ ...formData, title: e.target.value })
+                }
+                className="w-full bg-white/5 border border-white/5 rounded-xl py-4 px-6 text-sm focus:border-blue-500 outline-none transition-all"
+              />
+              <textarea
+                required
+                placeholder="DESCRIPTION"
+                rows="3"
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
+                className="w-full bg-white/5 border border-white/5 rounded-xl py-4 px-6 text-sm focus:border-blue-500 outline-none transition-all"
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <input
+                  required
+                  placeholder="TECHS (REACT, NODE...)"
+                  value={formData.techStack}
+                  onChange={(e) =>
+                    setFormData({ ...formData, techStack: e.target.value })
+                  }
+                  className="w-full bg-white/5 border border-white/5 rounded-xl py-4 px-6 text-sm focus:border-blue-500 outline-none transition-all"
+                />
+                <select
+                  value={formData.status}
+                  onChange={(e) =>
+                    setFormData({ ...formData, status: e.target.value })
+                  }
+                  className="bg-zinc-900 border border-white/5 rounded-xl px-4 text-sm outline-none"
                 >
-                  Annuler l'action
-                </button>
-                <button
-                  type="submit"
-                  className="flex-[2] bg-blue-600 hover:bg-blue-500 text-white font-black text-[10px] uppercase tracking-[0.2em] py-5 rounded-2xl transition-all shadow-xl shadow-blue-600/20 active:scale-95"
-                >
-                  {editingId
-                    ? "Mettre à jour le système"
-                    : "Déployer le projet"}
-                </button>
+                  <option value="online">Online</option>
+                  <option value="progress">In Progress</option>
+                  <option value="offline">Offline</option>
+                </select>
               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <input
+                  placeholder="Lien GitHub"
+                  value={formData.githubUrl}
+                  onChange={(e) =>
+                    setFormData({ ...formData, githubUrl: e.target.value })
+                  }
+                  className="w-full bg-white/5 border border-white/5 rounded-xl py-4 px-6 text-sm outline-none"
+                />
+                <input
+                  placeholder="Lien Demo"
+                  value={formData.liveUrl}
+                  onChange={(e) =>
+                    setFormData({ ...formData, liveUrl: e.target.value })
+                  }
+                  className="w-full bg-white/5 border border-white/5 rounded-xl py-4 px-6 text-sm outline-none"
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black uppercase py-5 rounded-2xl transition-all"
+              >
+                {editingId ? "Mettre à jour" : "Déployer"}
+              </button>
             </form>
           </div>
         </div>

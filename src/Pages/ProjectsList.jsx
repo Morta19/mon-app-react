@@ -1,32 +1,43 @@
-// src/pages/ProjectsList.jsx
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { FaArrowRight, FaCode, FaRocket } from "react-icons/fa";
 
-const API_URL = "http://localhost:4000/projects";
-
-function ProjectsList() {
+const ProjectsList = () => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // RÉCUPÉRATION DE L'URL DE BASE DEPUIS .env.local (Vite)
+  const API_BASE = import.meta.env.VITE_API_URL;
+
   useEffect(() => {
-    async function load() {
+    async function loadProjects() {
+      if (!API_BASE) {
+        console.error("VITE_API_URL n'est pas définie dans le fichier .env");
+        return;
+      }
+
       try {
         setLoading(true);
-        const res = await fetch(API_URL);
-        if (!res.ok) throw new Error("Erreur serveur");
+        setError(null);
+
+        const res = await fetch(`${API_BASE}/projects`);
+        if (!res.ok) throw new Error("Erreur serveur lors de la récupération");
+
         const data = await res.json();
-        // On ne montre que les projets opérationnels ou en brouillon, pas les archivés
-        setProjects(data.filter((p) => p.status !== "archived"));
+
+        // Filtrage : on ne montre pas les projets archivés
+        const visibleProjects = data.filter((p) => p.status !== "archived");
+        setProjects(visibleProjects);
       } catch (err) {
-        setError("Impossible de charger les projets.");
+        console.error("Erreur List:", err);
+        setError("Impossible de charger la galerie de projets.");
       } finally {
         setLoading(false);
       }
     }
-    load();
-  }, []);
+    loadProjects();
+  }, [API_BASE]);
 
   if (loading)
     return (
@@ -56,79 +67,109 @@ function ProjectsList() {
           </h1>
         </header>
 
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          {projects.map((project) => (
-            <Link
-              to={`/projects/${project.id}`}
-              key={project.id}
-              className="group relative bg-zinc-900/30 border border-white/5 rounded-[2rem] overflow-hidden hover:border-blue-500/50 transition-all duration-500 backdrop-blur-sm"
-            >
-              {/* Overlay Gradient au hover */}
-              <div className="absolute inset-0 bg-gradient-to-b from-blue-600/0 to-blue-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+        {error ? (
+          <div className="text-center py-20 border border-dashed border-red-500/20 rounded-[3rem]">
+            <p className="text-red-400 font-mono uppercase tracking-widest text-sm">
+              {error}
+            </p>
+          </div>
+        ) : (
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            {projects.map((project) => {
+              // --- SÉCURISATION DU TECHSTACK ---
+              // On s'assure que techArray est toujours un tableau pour éviter le crash .map()
+              let techArray = [];
+              if (Array.isArray(project.techStack)) {
+                techArray = project.techStack;
+              } else if (typeof project.techStack === "string") {
+                techArray = project.techStack.split(",").map((t) => t.trim());
+              }
 
-              {/* Visuel du haut */}
-              <div className="h-48 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-zinc-900 group-hover:scale-110 transition-transform duration-700"></div>
-                {/* Badge Statut */}
-                <div className="absolute top-6 right-6">
-                  <span
-                    className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${
-                      project.status === "online"
-                        ? "bg-green-500/10 border-green-500/20 text-green-400"
-                        : "bg-blue-500/10 border-blue-500/20 text-blue-400"
-                    }`}
-                  >
-                    {project.status}
-                  </span>
-                </div>
-                <FaCode className="absolute bottom-6 left-6 text-white/10 text-6xl group-hover:text-blue-500/20 transition-colors" />
-              </div>
+              return (
+                <Link
+                  to={`/projects/${project.id}`}
+                  key={project.id}
+                  className="group relative bg-zinc-900/30 border border-white/5 rounded-[2rem] overflow-hidden hover:border-blue-500/50 transition-all duration-500 backdrop-blur-sm"
+                >
+                  {/* Overlay Gradient au hover */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-blue-600/0 to-blue-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
-              {/* Contenu textuel */}
-              <div className="p-8 space-y-4 relative">
-                <h2 className="text-2xl font-bold tracking-tight group-hover:text-blue-400 transition-colors">
-                  {project.title}
-                </h2>
+                  {/* Visuel du haut */}
+                  <div className="h-48 relative overflow-hidden">
+                    {project.image ? (
+                      <img
+                        src={project.image}
+                        alt={project.title}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-60 group-hover:opacity-100"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-zinc-900 group-hover:scale-110 transition-transform duration-700"></div>
+                    )}
 
-                <p className="text-zinc-500 text-sm leading-relaxed line-clamp-3 font-medium">
-                  {project.description}
-                </p>
-
-                {/* Tags de Tech Stack */}
-                <div className="flex flex-wrap gap-2 pt-2">
-                  {project.techStack?.slice(0, 3).map((tech) => (
-                    <span
-                      key={tech}
-                      className="text-[9px] font-black uppercase tracking-tighter px-2 py-1 bg-white/5 border border-white/5 rounded text-zinc-400"
-                    >
-                      {tech}
-                    </span>
-                  ))}
-                  {project.techStack?.length > 3 && (
-                    <span className="text-[9px] font-black text-zinc-600">
-                      +{project.techStack.length - 3}
-                    </span>
-                  )}
-                </div>
-
-                <div className="pt-6 flex items-center justify-between border-t border-white/5">
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white flex items-center gap-2">
-                    Détails{" "}
-                    <FaArrowRight className="group-hover:translate-x-2 transition-transform" />
-                  </span>
-                  <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-blue-600 transition-colors">
-                    <FaRocket
-                      size={12}
-                      className="group-hover:text-white text-zinc-500"
-                    />
+                    {/* Badge Statut */}
+                    <div className="absolute top-6 right-6">
+                      <span
+                        className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${
+                          project.status === "online"
+                            ? "bg-green-500/10 border-green-500/20 text-green-400"
+                            : "bg-blue-500/10 border-blue-500/20 text-blue-400"
+                        }`}
+                      >
+                        {project.status || "Publié"}
+                      </span>
+                    </div>
+                    {!project.image && (
+                      <FaCode className="absolute bottom-6 left-6 text-white/10 text-6xl group-hover:text-blue-500/20 transition-colors" />
+                    )}
                   </div>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
 
-        {projects.length === 0 && (
+                  {/* Contenu textuel */}
+                  <div className="p-8 space-y-4 relative">
+                    <h2 className="text-2xl font-bold tracking-tight group-hover:text-blue-400 transition-colors">
+                      {project.title}
+                    </h2>
+
+                    <p className="text-zinc-500 text-sm leading-relaxed line-clamp-3 font-medium">
+                      {project.description}
+                    </p>
+
+                    {/* Tags de Tech Stack (Affichage sécurisé) */}
+                    <div className="flex flex-wrap gap-2 pt-2">
+                      {techArray.slice(0, 3).map((tech, index) => (
+                        <span
+                          key={index}
+                          className="text-[9px] font-black uppercase tracking-tighter px-2 py-1 bg-white/5 border border-white/5 rounded text-zinc-400"
+                        >
+                          {tech}
+                        </span>
+                      ))}
+                      {techArray.length > 3 && (
+                        <span className="text-[9px] font-black text-zinc-600">
+                          +{techArray.length - 3}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="pt-6 flex items-center justify-between border-t border-white/5">
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white flex items-center gap-2">
+                        Détails{" "}
+                        <FaArrowRight className="group-hover:translate-x-2 transition-transform" />
+                      </span>
+                      <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-blue-600 transition-colors">
+                        <FaRocket
+                          size={12}
+                          className="group-hover:text-white text-zinc-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+
+        {!loading && projects.length === 0 && !error && (
           <div className="text-center py-20 border border-dashed border-white/10 rounded-[3rem]">
             <p className="text-zinc-500 font-mono uppercase tracking-widest">
               Aucun projet déployé pour le moment.
@@ -138,6 +179,6 @@ function ProjectsList() {
       </div>
     </section>
   );
-}
+};
 
 export default ProjectsList;

@@ -50,10 +50,10 @@
 // export default axiosClient;
 import axios from 'axios';
 
-// Utilise la variable d'environnement définie dans .env.local
-// Si la variable n'existe pas (ex: en local), on utilise l'URL par défaut
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
+console.log("Ma variable est :", API_URL); // <--- AJOUTEZ CECI
 const axiosClient = axios.create({
   baseURL: API_URL,
   headers: {

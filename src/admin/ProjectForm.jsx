@@ -1,152 +1,202 @@
-import { useEffect, useRef, useState } from "react";
+import { useState, useEffect } from "react";
+
 function ProjectForm({ initialProject, onCreate, onUpdate, onCancel }) {
-  const [title, setTitle] = useState(initialProject?.title || "");
-  const [description, setDescription] = useState(
-    initialProject?.description || ""
-  );
-  const [techStack, setTechStack] = useState(
-    initialProject?.techStack?.join(", ") || ""
-  );
-  const [status, setStatus] = useState(initialProject?.status || "draft");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const titleRef = useRef(null);
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    techStack: "",
+    status: "online",
+    githubUrl: "",
+    liveUrl: "",
+    internalid: "", // Nouveau champ basé sur votre capture MockAPI
+  });
+
   useEffect(() => {
-    titleRef.current?.focus();
-  }, []);
-  const isEditMode = Boolean(initialProject);
-  async function handleSubmit(e) {
+    if (initialProject) {
+      setFormData({
+        ...initialProject,
+        techStack: Array.isArray(initialProject.techStack)
+          ? initialProject.techStack.join(", ")
+          : initialProject.techStack || "",
+      });
+    } else {
+      setFormData({
+        title: "",
+        description: "",
+        techStack: "",
+        status: "online",
+        githubUrl: "",
+        liveUrl: "",
+        internalid: "",
+      });
+    }
+  }, [initialProject]);
+
+  const handleSubmit = (e) => {
     e.preventDefault();
-    setError(null);
-    if (!title.trim()) {
-      setError("Le titre est obligatoire");
-      return;
-    }
-    const payload = {
-      ...initialProject,
-      title: title.trim(),
-      description: description.trim(),
-      techStack: techStack
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean),
-      status,
+
+    const projectData = {
+      ...formData,
+      // On s'assure que techStack est envoyé sous forme de texte simple comme défini dans votre MockAPI
+      techStack: formData.techStack,
+      // Optionnel : si vous voulez que ce soit un tableau, décommentez la ligne ci-dessous :
+      // techStack: formData.techStack.split(',').map(s => s.trim())
     };
-    try {
-      setLoading(true);
-      if (isEditMode) {
-        await onUpdate(initialProject.id, payload);
-      } else {
-        await onCreate(payload);
-      }
-      // reset si création
-      if (!isEditMode) {
-        setTitle("");
-        setDescription("");
-        setTechStack("");
-        setStatus("draft");
-        titleRef.current?.focus();
-      }
-    } catch (err) {
-      setError(err.message || "Erreur lors de la sauvegarde");
-    } finally {
-      setLoading(false);
+
+    if (initialProject) {
+      onUpdate(initialProject.id, projectData);
+    } else {
+      onCreate(projectData);
+      // Reset après création
+      setFormData({
+        title: "",
+        description: "",
+        techStack: "",
+        status: "online",
+        githubUrl: "",
+        liveUrl: "",
+        internalid: "",
+      });
     }
-  }
+  };
 
-  // Remplace le contenu de ton return dans ProjectForm.jsx par celui-ci :
   return (
-    <div className="bg-[#121214] rounded-3xl border border-white/5 p-8 shadow-2xl relative overflow-hidden">
-      <div className="absolute top-0 left-0 w-1 h-full bg-blue-600"></div>
-
-      <h2 className="text-sm font-black text-white uppercase tracking-[0.2em] mb-6 flex items-center gap-3">
-        <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
-        {isEditMode
-          ? "Configuration du Module"
-          : "Initialisation Nouveau Projet"}
+    <form
+      onSubmit={handleSubmit}
+      className="bg-[#121214] border border-white/10 rounded-[2.5rem] p-8 space-y-6 shadow-2xl"
+    >
+      <h2 className="text-xl font-black uppercase italic text-blue-500">
+        {initialProject ? "Mise à jour Module" : "Configuration Système"}
       </h2>
 
-      <form
-        onSubmit={handleSubmit}
-        className="grid grid-cols-1 md:grid-cols-2 gap-6"
-      >
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Titre & Internal ID */}
         <div className="space-y-4">
           <div>
-            <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">
-              Titre du Projet
+            <label className="text-[10px] font-black uppercase text-zinc-500 mb-1 block ml-2">
+              Nom du Projet
             </label>
             <input
-              ref={titleRef}
+              required
               type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-blue-500/50 transition-all"
-              placeholder="Ex: Système POS 2.0"
+              value={formData.title}
+              onChange={(e) =>
+                setFormData({ ...formData, title: e.target.value })
+              }
+              className="w-full bg-black border border-white/5 rounded-2xl py-3 px-4 text-white focus:border-blue-500 outline-none"
+              placeholder="Titre"
             />
           </div>
           <div>
-            <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">
-              Stack Technique
+            <label className="text-[10px] font-black uppercase text-zinc-500 mb-1 block ml-2">
+              ID Interne (Schema)
             </label>
             <input
+              required
               type="text"
-              value={techStack}
-              onChange={(e) => setTechStack(e.target.value)}
-              className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-blue-500/50"
-              placeholder="React, Tailwind, Node..."
+              value={formData.internalid}
+              onChange={(e) =>
+                setFormData({ ...formData, internalid: e.target.value })
+              }
+              className="w-full bg-black border border-white/5 rounded-2xl py-3 px-4 text-white focus:border-blue-500 outline-none"
+              placeholder="Ex: PRJ-001"
             />
           </div>
         </div>
 
-        <div className="space-y-4">
-          <div>
-            <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">
-              Description
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-blue-500/50 h-[125px] resize-none"
-            />
-          </div>
+        {/* Description */}
+        <div>
+          <label className="text-[10px] font-black uppercase text-zinc-500 mb-1 block ml-2">
+            Description
+          </label>
+          <textarea
+            required
+            rows="4"
+            value={formData.description}
+            onChange={(e) =>
+              setFormData({ ...formData, description: e.target.value })
+            }
+            className="w-full bg-black border border-white/5 rounded-2xl py-3 px-4 text-white focus:border-blue-500 outline-none resize-none"
+          />
         </div>
 
-        <div className="md:col-span-2 flex items-center justify-between border-t border-white/5 pt-6">
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            className="bg-zinc-800 text-[10px] font-black uppercase tracking-widest text-white px-4 py-2 rounded-full border-none outline-none cursor-pointer"
-          >
-            <option value="draft">Brouillon</option>
-            <option value="online">Opérationnel</option>
-            <option value="archived">Archivé</option>
-          </select>
-
-          <div className="flex gap-3">
-            {isEditMode && (
-              <button
-                type="button"
-                onClick={onCancel}
-                className="px-6 py-3 text-[10px] font-black uppercase text-zinc-500 hover:text-white transition"
-              >
-                Annuler
-              </button>
-            )}
-            <button
-              type="submit"
-              disabled={loading}
-              className="bg-blue-600 px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] text-white shadow-lg shadow-blue-600/20 hover:scale-105 transition-all disabled:opacity-50"
+        {/* Tech Stack & Status */}
+        <div className="md:col-span-2 grid grid-cols-2 gap-6">
+          <div>
+            <label className="text-[10px] font-black uppercase text-zinc-500 mb-1 block ml-2">
+              Technologies
+            </label>
+            <input
+              required
+              type="text"
+              value={formData.techStack}
+              onChange={(e) =>
+                setFormData({ ...formData, techStack: e.target.value })
+              }
+              className="w-full bg-black border border-white/5 rounded-2xl py-3 px-4 text-white focus:border-blue-500 outline-none"
+              placeholder="React, Tailwind..."
+            />
+          </div>
+          <div>
+            <label className="text-[10px] font-black uppercase text-zinc-500 mb-1 block ml-2">
+              Statut
+            </label>
+            <select
+              value={formData.status}
+              onChange={(e) =>
+                setFormData({ ...formData, status: e.target.value })
+              }
+              className="w-full bg-black border border-white/5 rounded-2xl py-3 px-4 text-white focus:border-blue-500 outline-none"
             >
-              {loading
-                ? "Traitement..."
-                : isEditMode
-                ? "Sauvegarder Changements"
-                : "Déployer Projet"}
-            </button>
+              <option value="online">Online</option>
+              <option value="progress">In Progress</option>
+              <option value="archived">Archived</option>
+            </select>
           </div>
         </div>
-      </form>
-    </div>
+
+        {/* Liens */}
+        <div className="md:col-span-2 grid grid-cols-2 gap-6">
+          <input
+            type="url"
+            value={formData.githubUrl}
+            onChange={(e) =>
+              setFormData({ ...formData, githubUrl: e.target.value })
+            }
+            className="w-full bg-black border border-white/5 rounded-2xl py-3 px-4 text-white focus:border-blue-500 outline-none"
+            placeholder="GitHub URL"
+          />
+          <input
+            type="url"
+            value={formData.liveUrl}
+            onChange={(e) =>
+              setFormData({ ...formData, liveUrl: e.target.value })
+            }
+            className="w-full bg-black border border-white/5 rounded-2xl py-3 px-4 text-white focus:border-blue-500 outline-none"
+            placeholder="Live Demo URL"
+          />
+        </div>
+      </div>
+
+      <div className="flex gap-4 pt-4">
+        <button
+          type="submit"
+          className="flex-1 bg-blue-600 text-white font-black uppercase py-4 rounded-2xl hover:bg-blue-500 transition-all"
+        >
+          {initialProject ? "Mettre à jour" : "Déployer sur MockAPI"}
+        </button>
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-8 bg-zinc-800 text-white font-black uppercase py-4 rounded-2xl hover:bg-zinc-700"
+          >
+            Annuler
+          </button>
+        )}
+      </div>
+    </form>
   );
 }
+
 export default ProjectForm;

@@ -1,8 +1,8 @@
-import axios from './axios';
+import axiosClient from './axios';
 // Auth très simple pour atelier (NE PAS faire en prod tel quel)
 export async function loginWithJson(email, password) {
 // On filtre par email + password dans le JSON
-const res = await axios.get('/users', {
+const res = await axiosClient.get('/users', {
 params: { email, password },
 });
 const users = res.data;

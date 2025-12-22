@@ -17,43 +17,45 @@ const AdminDashboard = () => {
   const [messageCount, setMessageCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  // 2. FONCTION DE DÉCONNEXION (Logout)
+  // RÉCUPÉRATION DE L'URL DE BASE DEPUIS .env.local (Vite)
+  const API_BASE = import.meta.env.VITE_API_URL;
+
+  // 2. FONCTION DE DÉCONNEXION
   const handleLogout = () => {
-    // Supprime toutes les données d'authentification
     localStorage.removeItem("token");
     localStorage.clear();
     sessionStorage.clear();
-
-    // Redirection forcée vers la page de login avec rechargement
     window.location.replace("/login");
   };
 
-  // 3. RÉCUPÉRATION DES DONNÉES
+  // 3. RÉCUPÉRATION DES DONNÉES DEPUIS MOCKAPI
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         // Récupération des projets
-        const resProj = await fetch("http://localhost:4000/projects");
+        const resProj = await fetch(`${API_BASE}/projects`);
         if (resProj.ok) {
           const projects = await resProj.json();
           setProjectCount(projects.length);
         }
 
         // Récupération des messages
-        const resMsg = await fetch("http://localhost:4000/messages");
+        const resMsg = await fetch(`${API_BASE}/messages`);
         if (resMsg.ok) {
           const messages = await resMsg.json();
           setMessageCount(messages.length);
         }
       } catch (error) {
-        console.error("Erreur API:", error);
+        console.error("Erreur API Dashboard:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchDashboardData();
-  }, []);
+    if (API_BASE) {
+      fetchDashboardData();
+    }
+  }, [API_BASE]);
 
   // 4. CONFIGURATION DES STATISTIQUES
   const stats = [
@@ -96,7 +98,6 @@ const AdminDashboard = () => {
         </div>
 
         <div className="flex flex-wrap gap-3">
-          {/* BOUTON GÉRER PROJETS */}
           <Link
             to="/admin/projects"
             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)] active:scale-95"
@@ -104,7 +105,6 @@ const AdminDashboard = () => {
             <FaPlus /> Gérer Projets
           </Link>
 
-          {/* BOUTON DÉCONNEXION CORRIGÉ */}
           <button
             onClick={handleLogout}
             className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(220,38,38,0.2)] active:scale-95"
@@ -207,7 +207,6 @@ const AdminDashboard = () => {
   );
 };
 
-// Petit composant interne pour les items d'activité (propreté du code)
 const ActivityItem = ({ icon, title, desc, color, bgColor }) => (
   <div className="flex items-center justify-between p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-colors">
     <div className="flex items-center gap-4">

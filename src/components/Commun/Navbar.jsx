@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { FaBars, FaTimes, FaUserCheck } from "react-icons/fa";
+import { FaBars, FaTimes, FaUserCheck, FaSignInAlt } from "react-icons/fa";
 
 const Navbar = () => {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -8,18 +8,23 @@ const Navbar = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const location = useLocation();
 
-  // 1. Détection du scroll pour le style
+  // 1. Détection du scroll pour changer l'apparence
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // 2. Vérification de l'auth (basée sur la présence d'un token)
+  // 2. Bloquer le scroll de l'écran quand le menu mobile est ouvert
+  useEffect(() => {
+    document.body.style.overflow = isMobileOpen ? "hidden" : "unset";
+  }, [isMobileOpen]);
+
+  // 3. Simuler/Vérifier l'authentification
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     setIsAuthenticated(Boolean(token));
-  }, [location.pathname]); // Vérifie à chaque changement de page
+  }, [location.pathname]);
 
   const navigation = [
     { name: "Accueil", path: "/" },
@@ -29,28 +34,30 @@ const Navbar = () => {
     { name: "Contact", path: "/contact" },
   ];
 
+  // Fonction pour fermer proprement le menu mobile
+  const closeMenu = () => setIsMobileOpen(false);
+
   return (
     <nav
       className={`fixed top-0 w-full z-[100] transition-all duration-500 ${
         scrolled
-          ? "bg-[#08080a]/90 backdrop-blur-md border-b border-white/5 py-3"
+          ? "bg-[#08080a]/95 backdrop-blur-xl border-b border-white/10 py-3 shadow-2xl"
           : "bg-transparent py-6"
       }`}
     >
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="flex items-center justify-between">
           {/* LOGO */}
-          <Link to="/" className="group flex items-center gap-4">
-            <div className="relative flex items-center justify-center">
-              <div className="absolute inset-0 bg-blue-600 rounded-lg blur-md opacity-20 group-hover:opacity-50 transition duration-500"></div>
-              <div className="relative w-10 h-10 bg-gradient-to-br from-zinc-800 to-black border border-white/10 rounded-lg flex items-center justify-center shadow-xl">
-                <span className="text-white font-black text-xs uppercase tracking-tighter">
-                  MH
-                </span>
-              </div>
+          <Link
+            to="/"
+            onClick={closeMenu}
+            className="group flex items-center gap-3"
+          >
+            <div className="relative w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:scale-110 transition-transform duration-300">
+              <span className="text-white font-black text-sm">MH</span>
             </div>
-            <div className="flex flex-col">
-              <h1 className="text-white font-black tracking-[0.05em] text-lg leading-none uppercase italic">
+            <div className="hidden sm:block">
+              <h1 className="text-white font-black tracking-widest text-lg leading-none uppercase italic">
                 MORTADHA{" "}
                 <span className="text-blue-500 font-light not-italic">
                   HASSEN
@@ -59,97 +66,118 @@ const Navbar = () => {
             </div>
           </Link>
 
-          {/* MENU DESKTOP */}
-          <div className="hidden md:flex items-center gap-6">
-            <ul className="flex items-center p-1 bg-white/5 rounded-full border border-white/10 backdrop-blur-md">
+          {/* MENU DESKTOP (Cache sur Mobile) */}
+          <div className="hidden md:flex items-center gap-8">
+            <ul className="flex items-center gap-2 p-1 bg-white/5 border border-white/10 rounded-full">
               {navigation.map((item) => (
                 <li key={item.name}>
                   <Link
                     to={item.path}
-                    className={`relative px-5 py-2 block rounded-full text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${
+                    className={`px-5 py-2 block rounded-full text-[10px] font-bold uppercase tracking-widest transition-all duration-300 ${
                       location.pathname === item.path
-                        ? "text-white"
-                        : "text-zinc-500 hover:text-white"
+                        ? "text-white bg-blue-600 shadow-lg shadow-blue-600/30"
+                        : "text-zinc-400 hover:text-white hover:bg-white/10"
                     }`}
                   >
-                    {location.pathname === item.path && (
-                      <div className="absolute inset-0 bg-blue-600 rounded-full -z-10 shadow-[0_0_15px_rgba(37,99,235,0.4)]"></div>
-                    )}
                     {item.name}
                   </Link>
                 </li>
               ))}
             </ul>
 
-            {/* BOUTON DYNAMIQUE (Login ou Connecté) */}
             <Link
               to={isAuthenticated ? "/admin" : "/login"}
-              className={`flex items-center gap-2 px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all duration-300 border ${
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all duration-300 border ${
                 isAuthenticated
                   ? "bg-green-500/10 border-green-500/50 text-green-500 hover:bg-green-500 hover:text-white"
-                  : "bg-white/5 border-white/10 text-white hover:bg-white hover:text-black"
+                  : "bg-white text-black hover:bg-blue-600 hover:text-white border-transparent"
               }`}
             >
               {isAuthenticated ? (
                 <>
-                  <FaUserCheck className="text-sm" />
-                  Connecté
+                  <FaUserCheck /> Admin
                 </>
               ) : (
-                "Login"
+                <>
+                  <FaSignInAlt /> Login
+                </>
               )}
             </Link>
           </div>
 
-          {/* MENU MOBILE BUTTON */}
+          {/* BOUTON MENU MOBILE (Hamburger) */}
           <button
             onClick={() => setIsMobileOpen(!isMobileOpen)}
-            className="md:hidden text-zinc-400 hover:text-white transition"
+            className="md:hidden relative z-[110] w-10 h-10 flex items-center justify-center text-white bg-white/5 border border-white/10 rounded-full"
+            aria-label="Toggle Menu"
           >
-            {isMobileOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
+            {isMobileOpen ? <FaTimes size={18} /> : <FaBars size={18} />}
           </button>
         </div>
       </div>
 
-      {/* OVERLAY MOBILE */}
+      {/* MENU MOBILE OVERLAY */}
       <div
-        className={`fixed inset-0 bg-[#08080a] z-50 md:hidden transition-all duration-500 ${
+        className={`fixed inset-0 bg-[#08080a] z-[105] md:hidden transition-all duration-700 ease-in-out ${
           isMobileOpen
-            ? "opacity-100 translate-y-0"
-            : "opacity-0 -translate-y-full pointer-events-none"
+            ? "translate-x-0 opacity-100"
+            : "translate-x-full opacity-0"
         }`}
       >
-        <div className="flex flex-col h-full p-10 pt-32 space-y-6">
-          <button
-            onClick={() => setIsMobileOpen(false)}
-            className="absolute top-8 right-8 text-zinc-500"
-          >
-            <FaTimes size={28} />
-          </button>
+        {/* Décoration de fond mobile */}
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-600/10 blur-[120px] rounded-full"></div>
 
-          {navigation.map((item) => (
+        <div className="flex flex-col h-full justify-center px-10">
+          <div className="space-y-6">
+            {navigation.map((item, index) => (
+              <Link
+                key={item.name}
+                to={item.path}
+                onClick={closeMenu}
+                style={{
+                  transitionDelay: isMobileOpen ? `${index * 100}ms` : "0ms",
+                  transform: isMobileOpen
+                    ? "translateX(0)"
+                    : "translateX(50px)",
+                  opacity: isMobileOpen ? 1 : 0,
+                }}
+                className={`block text-5xl font-black italic uppercase tracking-tighter transition-all duration-500 ${
+                  location.pathname === item.path
+                    ? "text-blue-500"
+                    : "text-white"
+                }`}
+              >
+                {item.name}
+              </Link>
+            ))}
+          </div>
+
+          <div
+            className="mt-16 transition-all duration-700 delay-500"
+            style={{ opacity: isMobileOpen ? 1 : 0 }}
+          >
             <Link
-              key={item.name}
-              to={item.path}
-              onClick={() => setIsMobileOpen(false)}
-              className="text-4xl font-black italic text-white uppercase tracking-tighter hover:text-blue-500 transition-colors"
+              to={isAuthenticated ? "/admin" : "/login"}
+              onClick={closeMenu}
+              className={`inline-flex items-center justify-center gap-3 w-full py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-sm border-2 ${
+                isAuthenticated
+                  ? "border-green-500 text-green-500 bg-green-500/5"
+                  : "border-blue-600 bg-blue-600 text-white shadow-xl shadow-blue-600/20"
+              }`}
             >
-              {item.name}
+              {isAuthenticated ? (
+                <>
+                  <FaUserCheck size={20} /> Dashboard Admin
+                </>
+              ) : (
+                "Se Connecter"
+              )}
             </Link>
-          ))}
 
-          {/* Bouton Login/Connecté Mobile */}
-          <Link
-            to={isAuthenticated ? "/admin" : "/login"}
-            onClick={() => setIsMobileOpen(false)}
-            className={`mt-10 block w-full py-4 text-center font-black uppercase tracking-widest rounded-xl transition-all ${
-              isAuthenticated
-                ? "bg-green-600 text-white"
-                : "bg-white text-black"
-            }`}
-          >
-            {isAuthenticated ? "Espace Admin (Connecté)" : "Se Connecter"}
-          </Link>
+            <p className="text-zinc-600 text-[10px] text-center mt-8 uppercase tracking-[0.3em] font-bold">
+              © 2024 Mortadha Hassen
+            </p>
+          </div>
         </div>
       </div>
     </nav>

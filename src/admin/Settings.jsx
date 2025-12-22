@@ -12,34 +12,48 @@ const AdminSettings = () => {
     email: "",
   });
 
-  // 1. Charger les infos actuelles
+  // RÉCUPÉRATION DE L'URL DE BASE DEPUIS .env.local
+  const API_BASE = import.meta.env.VITE_API_URL;
+
+  // 1. Charger les infos actuelles depuis MockAPI
   useEffect(() => {
-    fetch("http://localhost:4000/profile")
-      .then((res) => res.json())
+    // Note : Assurez-vous d'avoir créé une ressource /profile sur MockAPI
+    // Ou utilisez /profile/1 si vous avez une liste
+    fetch(`${API_BASE}/profile/1`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Erreur lors du chargement");
+        return res.json();
+      })
       .then((data) => setProfile(data))
-      .catch((err) => console.error("Erreur chargement profil", err));
-  }, []);
+      .catch((err) => console.error("Erreur chargement profil:", err));
+  }, [API_BASE]);
 
   // 2. Sauvegarder les modifications
   const handleSave = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:4000/profile", {
-        method: "PUT", // ou PATCH
+      // MockAPI utilise souvent PUT sur l'ID de la ressource (ex: /profile/1)
+      const response = await fetch(`${API_BASE}/profile/1`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(profile),
       });
-      if (response.ok) alert("Profil mis à jour avec succès !");
+
+      if (response.ok) {
+        alert("Profil mis à jour avec succès !");
+      } else {
+        throw new Error("Erreur serveur");
+      }
     } catch (error) {
-      alert("Erreur lors de la sauvegarde");
+      alert("Erreur lors de la sauvegarde : " + error.message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-4xl animate-in fade-in duration-500">
+    <div className="max-w-4xl animate-in fade-in duration-500 p-4 md:p-0">
       <div className="mb-8">
         <h1 className="text-4xl font-black italic tracking-tighter uppercase text-white">
           Settings<span className="text-blue-500">.</span>
@@ -56,7 +70,7 @@ const AdminSettings = () => {
             onClick={() => setActiveTab("general")}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
               activeTab === "general"
-                ? "bg-blue-600 text-white"
+                ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
                 : "bg-white/5 text-zinc-500 hover:bg-white/10"
             }`}
           >
@@ -66,7 +80,7 @@ const AdminSettings = () => {
             onClick={() => setActiveTab("social")}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
               activeTab === "social"
-                ? "bg-blue-600 text-white"
+                ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
                 : "bg-white/5 text-zinc-500 hover:bg-white/10"
             }`}
           >
@@ -98,7 +112,7 @@ const AdminSettings = () => {
                     Photo de profil
                   </h3>
                   <p className="text-zinc-500 text-[10px] uppercase font-medium mt-1">
-                    JPG, PNG ou GIF. Max 1MB.
+                    Format URL (MockAPI). Max 1MB.
                   </p>
                 </div>
               </div>
@@ -163,7 +177,7 @@ const AdminSettings = () => {
                 <button
                   disabled={loading}
                   type="submit"
-                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all shadow-lg shadow-blue-600/20 disabled:opacity-50"
+                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all shadow-lg shadow-blue-600/20 disabled:opacity-50 active:scale-95"
                 >
                   <FaSave />{" "}
                   {loading
