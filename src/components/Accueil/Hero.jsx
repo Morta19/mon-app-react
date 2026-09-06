@@ -1,4 +1,5 @@
 import React, { useRef, useEffect } from "react";
+import { Link } from "react-router-dom";
 import {
   FaGithub,
   FaLinkedin,
@@ -102,13 +103,13 @@ const Hero = () => {
                 Voir mes projets <FaChevronRight size={12} />
               </a>
 
-              <a
-                href="mailto:Mortadhahassenmasmoudi@gmail.com"
+              <Link
+                to="/contact"
                 className="btn-ghost inline-flex items-center gap-3"
               >
                 <FaEnvelope size={14} className="text-[var(--accent)]" /> Me
                 contacter
-              </a>
+              </Link>
             </div>
           </div>
 
