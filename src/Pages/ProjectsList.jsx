@@ -1,8 +1,7 @@
 import { useEffect, useState, useRef } from "react";
-import { FaArrowRight, FaCode, FaRocket } from "react-icons/fa";
+import { FaArrowRight, FaRocket } from "react-icons/fa";
 import { FaTimes } from "react-icons/fa";
 import localData from "../../db.json";
-import mortaImg from "../assets/morta.jpg";
 
 const ProjectsList = () => {
   const [projects, setProjects] = useState([]);
@@ -200,39 +199,49 @@ const ProjectsList = () => {
 
             {/* FEATURED */}
             {featured && (
-              <div className="mb-8 border border-[var(--line)] rounded-2xl overflow-hidden bg-[var(--surface)] p-6">
-                <div className="flex flex-col md:flex-row items-center gap-6">
-                  <div className="w-full md:w-1/3 h-40 sm:h-48 md:h-40 overflow-hidden rounded-xl">
-                    <img
-                      src={featured.image || mortaImg}
-                      alt={featured.title}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-2xl font-bold">Projet mis en avant</h3>
-                    <h2 className="text-3xl font-black my-2">
-                      {featured.title}
-                    </h2>
-                    <p className="text-zinc-400 line-clamp-3">
-                      {featured.description}
-                    </p>
-                    <div className="mt-4 flex items-center gap-4">
-                      {featured.liveUrl && (
-                        <a
-                          href={featured.liveUrl}
-                          className="px-4 py-2 btn-primary rounded-md text-sm"
-                        >
-                          Voir en ligne
-                        </a>
-                      )}
-                      <button
-                        onClick={() => setSelectedProject(featured)}
-                        className="px-4 py-2 btn-ghost rounded-md text-sm"
-                      >
-                        Détails
-                      </button>
+              <div className="mb-8 border border-[var(--line)] rounded-2xl bg-[var(--surface)] p-6 md:p-8">
+                <div className="flex flex-col gap-5">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-mono uppercase tracking-[0.2em] text-[var(--accent)]">
+                        Projet mis en avant
+                      </p>
+                      <h2 className="text-3xl font-black mt-2">
+                        {featured.title}
+                      </h2>
                     </div>
+                    <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-green-500/20 bg-green-500/10 text-green-400">
+                      {featured.status || "Publié"}
+                    </span>
+                  </div>
+                  <p className="max-w-4xl text-zinc-400 leading-relaxed">
+                    {featured.description}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {(Array.isArray(featured.techStack)
+                      ? featured.techStack
+                      : (featured.techStack || "").split(",")
+                    ).map((tech, index) => (
+                      <span key={index} className="tech-chip">
+                        {tech.trim()}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-4">
+                    {featured.liveUrl && (
+                      <a
+                        href={featured.liveUrl}
+                        className="px-4 py-2 btn-primary rounded-md text-sm"
+                      >
+                        Voir en ligne
+                      </a>
+                    )}
+                    <button
+                      onClick={() => setSelectedProject(featured)}
+                      className="px-4 py-2 btn-ghost rounded-md text-sm"
+                    >
+                      Détails
+                    </button>
                   </div>
                 </div>
               </div>
@@ -270,30 +279,14 @@ const ProjectsList = () => {
                         ? "Projet principal"
                         : "Projet"}
                     </div>
-                    {/* Overlay Gradient au hover */}
-                    <div className="absolute inset-0 bg-gradient-to-b from-blue-600/0 to-blue-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-
-                    {/* Visuel du haut */}
-                    <div className="h-40 sm:h-48 md:h-56 relative overflow-hidden">
-                      {project.image ? (
-                        <img
-                          loading="lazy"
-                          src={project.image}
-                          alt={project.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                        />
-                      ) : (
-                        <div className="absolute inset-0 bg-gradient-to-br from-[var(--surface-3)] to-[var(--surface-2)] group-hover:scale-105 transition-transform duration-700 flex items-center justify-center">
-                          <div className="text-[var(--muted-2)] font-bold px-6 text-center">
-                            {project.title}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Badge Statut */}
-                      <div className="absolute top-6 right-6">
+                    {/* Contenu textuel */}
+                    <div className="p-6 md:p-8 space-y-4 relative">
+                      <div className="flex items-start justify-between gap-4">
+                        <h2 className="text-2xl font-bold tracking-tight group-hover:text-[var(--accent)] transition-colors">
+                          {project.title}
+                        </h2>
                         <span
-                          className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${
+                          className={`shrink-0 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${
                             project.status === "online"
                               ? "bg-green-500/10 border-green-500/20 text-green-400"
                               : "bg-blue-500/10 border-blue-500/20 text-blue-400"
@@ -302,16 +295,6 @@ const ProjectsList = () => {
                           {project.status || "Publié"}
                         </span>
                       </div>
-                      {!project.image && (
-                        <FaCode className="absolute bottom-6 left-6 text-white/10 text-6xl group-hover:text-blue-500/20 transition-colors" />
-                      )}
-                    </div>
-
-                    {/* Contenu textuel */}
-                    <div className="p-6 md:p-8 space-y-4 relative">
-                      <h2 className="text-2xl font-bold tracking-tight group-hover:text-[var(--accent)] transition-colors">
-                        {project.title}
-                      </h2>
 
                       <p className="text-[var(--muted-2)] text-sm leading-relaxed line-clamp-3 font-medium">
                         {project.description}
@@ -392,27 +375,15 @@ const ProjectsList = () => {
 
             <div className="mt-6 grid md:grid-cols-2 gap-6">
               <div>
-                <div className="w-full h-56 bg-[var(--surface-3)] rounded-md overflow-hidden">
-                  {selectedProject.image ? (
-                    <img
-                      loading="lazy"
-                      src={selectedProject.image}
-                      alt={selectedProject.title}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : null}
-                </div>
-                <div className="mt-4">
-                  <h4 className="font-display text-lg font-semibold">
-                    Contexte & Rôle
-                  </h4>
-                  <p className="text-[var(--muted-2)] text-sm mt-2">
-                    {selectedProject.role ||
-                      (selectedProject.title.includes("Smart")
-                        ? "Full-Stack + IA"
-                        : "Full-Stack + Microservices")}
-                  </p>
-                </div>
+                <h4 className="font-display text-lg font-semibold">
+                  Contexte & Rôle
+                </h4>
+                <p className="text-[var(--muted-2)] text-sm mt-2">
+                  {selectedProject.role ||
+                    (selectedProject.title.includes("Smart")
+                      ? "Full-Stack + IA"
+                      : "Full-Stack + Microservices")}
+                </p>
               </div>
 
               <div>

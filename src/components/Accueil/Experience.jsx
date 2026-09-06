@@ -5,12 +5,13 @@ import {
   FaExternalLinkAlt,
   FaRobot,
   FaServer,
+  FaBoxes,
 } from "react-icons/fa";
 
 const Experience = () => {
   const user = {
-    experience: "",
-    availability: "",
+    experience: "1+ an",
+    availability: "Disponible pour opportunités",
     bio: "Développeur full-stack spécialisé dans les architectures microservices et l'intégration de modèles IA.",
 
     stack: [
@@ -20,48 +21,69 @@ const Experience = () => {
       "Microservices",
     ],
 
+    // Trié du plus récent au plus ancien
     experiences: [
       {
         id: 1,
-        period: "Janvier — Avril 2025",
-        role: "Développeur Web Full-Stack",
-        company: "Linio.io (USA)",
-        location: "Remote",
-        type: "Mission",
-        icon: <FaRobot />,
-        description:
-          "Développement d'applications web avec React et Flask. Travaux de web scraping (Selenium, Playwright), conception d'API REST, et optimisation des applications.",
-        achievements: [
-          "Développement d'applications React & Flask",
-          "Web scraping avec Selenium et Playwright",
-          "Conception d'API REST et tests",
-        ],
-        technologies: ["React", "Flask", "Selenium", "Playwright", "Figma"],
-      },
-      {
-        id: 2,
         period: "Mars — Juillet 2026",
         role: "Développeur Full-Stack & IA",
         company: "BACAB Consulting",
         location: "Tunisie",
         type: "Projet de fin d'études",
-        icon: <FaServer />,
+        icon: <FaRobot />,
         description:
           "Développement d'une plateforme Smart City de gestion des incidents urbains, intégrant classification assistée par IA et tableaux de bord.",
         achievements: [
-          "Conception d'une architecture microservices (React, Flask)",
-          "Intégration d'un modèle YOLOv8 pour classification automatique",
-          "Mise en place d'authentification JWT et notifications e-mail",
+          "Conception d'une architecture microservices (React, Flask, REST API)",
+          "Intégration d'un modèle YOLOv8 pour classification automatique des incidents",
+          "Développement de tableaux de bord et gestion des rôles (JWT)",
+          "Mise en place de notifications e-mail",
         ],
         technologies: ["React", "Flask", "YOLOv8", "REST API", "JWT"],
+      },
+      {
+        id: 2,
+        period: "Juillet — Août 2025",
+        role: "Développeur Full-Stack",
+        company: "BACAB Consulting",
+        location: "Tunisie",
+        type: "Projet de fin d'année",
+        icon: <FaBoxes />,
+        description:
+          "Développement d'une application de gestion de stock, avec architecture microservices et API REST, pour la gestion des utilisateurs, produits et réservations.",
+        achievements: [
+          "Développement d'une application de gestion de stock (Flask, Vue.js)",
+          "Conception de microservices et d'API REST",
+          "Gestion des utilisateurs, produits et réservations",
+          "Projet récompensé du certificat « Meilleur Projet Innovant » (compétition interne)",
+        ],
+        technologies: ["Flask", "Vue.js", "REST API", "Microservices"],
+      },
+      {
+        id: 3,
+        period: "Janvier — Avril 2025",
+        role: "Développeur Web Full-Stack",
+        company: "Linio.io (USA)",
+        location: "Remote",
+        type: "Mission",
+        icon: <FaServer />,
+        description:
+          "Développement d'applications web avec React et Flask. Travaux de web scraping (Selenium, Playwright), conception d'API REST, et optimisation des applications.",
+        achievements: [
+          "Développement d'applications React & Flask",
+          "Conception d'interfaces avec Figma",
+          "Web scraping avec Selenium et Playwright",
+          "Conception d'API REST et tests",
+        ],
+        technologies: ["React", "Flask", "Selenium", "Playwright", "Figma"],
       },
     ],
 
     certifications: [
       {
         name: "Meilleur Projet Innovant",
-        organization: "IIT",
-        date: "2024",
+        organization: "Compétition interne — IIT",
+        date: "2025",
         url: "#",
       },
     ],
@@ -190,8 +212,6 @@ const Experience = () => {
           ))}
         </div>
 
-        {/* Reveal timeline points with IntersectionObserver (handled by hook) */}
-
         {/* RECOGNITION */}
         <div className="mt-4 border border-[var(--line-strong)] bg-[var(--surface)] p-8 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-6">
@@ -200,7 +220,7 @@ const Experience = () => {
             </div>
             <div>
               <h4 className="font-display text-xl font-semibold">
-                Projet innovant de l'année
+                {user.certifications[0].name}
               </h4>
               <p className="text-[var(--ink-muted)] text-sm">
                 {user.certifications[0].organization} ·{" "}
