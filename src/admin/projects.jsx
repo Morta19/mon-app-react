@@ -102,6 +102,7 @@ const AdminProjects = () => {
         handleCloseModal();
       }
     } catch (error) {
+      console.error("Erreur lors de l'enregistrement du projet:", error);
       alert("Erreur lors de l'enregistrement");
     }
   };
@@ -112,6 +113,7 @@ const AdminProjects = () => {
         await fetch(`${API_URL}/${id}`, { method: "DELETE" });
         setProjects(projects.filter((p) => p.id !== id));
       } catch (error) {
+        console.error("Erreur lors de la suppression du projet:", error);
         alert("Erreur lors de la suppression");
       }
     }
@@ -120,7 +122,7 @@ const AdminProjects = () => {
   // --- FILTRAGE ---
   const filteredProjects = useMemo(() => {
     return projects.filter((p) =>
-      p.title?.toLowerCase().includes(searchTerm.toLowerCase())
+      p.title?.toLowerCase().includes(searchTerm.toLowerCase()),
     );
   }, [projects, searchTerm]);
 
@@ -173,8 +175,8 @@ const AdminProjects = () => {
           const techArray = Array.isArray(project.techStack)
             ? project.techStack
             : typeof project.techStack === "string"
-            ? project.techStack.split(",")
-            : [];
+              ? project.techStack.split(",")
+              : [];
 
           return (
             <div

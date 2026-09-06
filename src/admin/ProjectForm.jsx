@@ -18,6 +18,7 @@ function ProjectForm({ initialProject, onCreate, onUpdate, onCancel }) {
         techStack: Array.isArray(initialProject.techStack)
           ? initialProject.techStack.join(", ")
           : initialProject.techStack || "",
+        image: initialProject.image || "",
       });
     } else {
       setFormData({
@@ -28,6 +29,7 @@ function ProjectForm({ initialProject, onCreate, onUpdate, onCancel }) {
         githubUrl: "",
         liveUrl: "",
         internalid: "",
+        image: "",
       });
     }
   }, [initialProject]);
@@ -175,6 +177,36 @@ function ProjectForm({ initialProject, onCreate, onUpdate, onCancel }) {
             className="w-full bg-black border border-white/5 rounded-2xl py-3 px-4 text-white focus:border-blue-500 outline-none"
             placeholder="Live Demo URL"
           />
+          <div className="col-span-2">
+            <label className="text-[10px] font-black uppercase text-zinc-500 mb-1 block ml-2">
+              Image du projet (URL ou upload)
+            </label>
+            <div className="flex gap-3 items-center">
+              <input
+                type="url"
+                value={formData.image}
+                onChange={(e) =>
+                  setFormData({ ...formData, image: e.target.value })
+                }
+                className="w-full bg-black border border-white/5 rounded-2xl py-3 px-4 text-white focus:border-blue-500 outline-none"
+                placeholder="https://..."
+              />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files && e.target.files[0];
+                  if (!file) return;
+                  const reader = new FileReader();
+                  reader.onload = () => {
+                    setFormData({ ...formData, image: reader.result });
+                  };
+                  reader.readAsDataURL(file);
+                }}
+                className="text-sm"
+              />
+            </div>
+          </div>
         </div>
       </div>
 

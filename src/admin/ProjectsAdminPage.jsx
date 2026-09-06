@@ -20,9 +20,17 @@ function ProjectsAdminPage() {
     async function load() {
       try {
         setLoading(true);
+        const API_BASE = import.meta.env.VITE_API_URL;
+        if (!API_BASE) {
+          setError(
+            "VITE_API_URL non configurée — impossible de joindre l'API.",
+          );
+          return;
+        }
         const data = await getProjects();
         setProjects(data);
       } catch (err) {
+        console.error("Erreur lors du chargement des projets:", err);
         setError("Erreur de connexion au serveur");
       } finally {
         setLoading(false);
@@ -43,6 +51,11 @@ function ProjectsAdminPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
+      {error && (
+        <div className="p-4 rounded-lg bg-red-600/10 border border-red-600/20 text-red-400">
+          {error}
+        </div>
+      )}
       {/* HEADER DYNAMIQUE */}
       <div className="flex justify-between items-center">
         <div>

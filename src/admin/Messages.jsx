@@ -7,9 +7,7 @@ import {
   FaInbox,
 } from "react-icons/fa";
 
-// URL DE VOTRE MOCKAPI
-const MOCK_API_URL =
-  "https://69497e321282f890d2d65641.mockapi.io/api/v1/formSubmissions";
+const MOCK_API_URL = `${import.meta.env.VITE_API_URL}/formSubmissions`;
 
 const AdminMessages = () => {
   const [messages, setMessages] = useState([]);
@@ -25,7 +23,7 @@ const AdminMessages = () => {
         const data = await response.json();
         // Trier par date la plus récente (du haut vers le bas)
         const sortedData = data.sort(
-          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
         );
         setMessages(sortedData);
       }
@@ -52,6 +50,7 @@ const AdminMessages = () => {
           setMessages(messages.filter((msg) => msg.id !== id));
         }
       } catch (error) {
+        console.error("Erreur lors de la suppression du message:", error);
         alert("Erreur lors de la suppression.");
       }
     }
@@ -63,7 +62,7 @@ const AdminMessages = () => {
     (msg) =>
       (msg.name || msg.nom)?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       msg.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      msg.message?.toLowerCase().includes(searchTerm.toLowerCase())
+      msg.message?.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   return (

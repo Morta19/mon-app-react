@@ -1,6 +1,7 @@
 import "./App.css";
 import { Route, Routes, Navigate } from "react-router-dom";
 import { useState } from "react";
+import { ThemeProvider } from "./context/ThemeContext.jsx";
 
 // Public Pages
 import Layout from "./Pages/Layout.jsx";
@@ -10,6 +11,7 @@ import Experience from "./components/Accueil/Experience.jsx";
 import ContactForm from "./components/Formulaire/FormulaireG6.jsx";
 import ProjectsList from "./Pages/ProjectsList.jsx";
 import ProjectDetails from "./Pages/ProjectDetails.jsx";
+import Skills from "./components/Skills/Skills.jsx";
 
 // Admin & Auth
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
@@ -25,16 +27,21 @@ import AdminProjects from "./admin/projects.jsx";
 
 function NotFound() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#08080a] text-white font-sans">
-      <h1 className="text-9xl font-black italic text-blue-600">404</h1>
-      <p className="text-xl font-bold uppercase tracking-widest text-zinc-500 mb-8">
-        Page introuvable
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[var(--bg)] text-[var(--ink)] font-sans px-6 text-center">
+      <p className="font-mono text-xs tracking-widest text-[var(--accent)] mb-4">
+        ERREUR 404
+      </p>
+      <h1 className="font-display text-7xl md:text-9xl font-bold text-[var(--ink)]">
+        404
+      </h1>
+      <p className="text-[var(--ink-muted)] mb-10 mt-2">
+        Cette page n'existe pas ou a été déplacée.
       </p>
       <a
         href="/"
-        className="bg-white text-black font-black px-8 py-4 rounded-full"
+        className="border border-[var(--line-strong)] px-8 py-4 font-mono text-xs tracking-widest hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
       >
-        Retour au site
+        RETOUR AU SITE
       </a>
     </div>
   );
@@ -42,63 +49,59 @@ function NotFound() {
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(
-    !!localStorage.getItem("authToken")
+    !!localStorage.getItem("authToken"),
   );
 
   return (
-    <Routes>
-      {/* --- PAGES PUBLIQUES --- */}
-      <Route path="/" element={<Layout />}>
-        <Route index element={<Hero />} />
-        <Route path="about" element={<About />} />
-        <Route path="projets" element={<Experience />} />
-        <Route path="contact" element={<ContactForm />} />
-        <Route path="projects" element={<ProjectsList />} />
-        <Route path="projects/:id" element={<ProjectDetails />} />
-      </Route>
+    <ThemeProvider>
+      <Routes>
+        {/* --- PAGES PUBLIQUES --- */}
+        <Route path="/" element={<Layout />}>
+          <Route index element={<Hero />} />
+          <Route path="about" element={<About />} />
+          <Route path="skills" element={<Skills />} />
+          <Route path="projets" element={<Experience />} />
+          <Route path="contact" element={<ContactForm />} />
+          <Route path="projects" element={<ProjectsList />} />
+          <Route path="projects/:id" element={<ProjectDetails />} />
+        </Route>
 
-      {/* --- AUTHENTIFICATION --- */}
-      <Route
-        path="/login"
-        element={
-          isAuthenticated ? (
-            <Navigate to="/admin" replace />
-          ) : (
-            <Login setIsAuthenticated={setIsAuthenticated} />
-          )
-        }
-      />
-      <Route
-        path="/logout"
-        element={<Logout setIsAuthenticated={setIsAuthenticated} />}
-      />
+        {/* --- AUTHENTIFICATION --- */}
+        <Route
+          path="/login"
+          element={
+            isAuthenticated ? (
+              <Navigate to="/admin" replace />
+            ) : (
+              <Login setIsAuthenticated={setIsAuthenticated} />
+            )
+          }
+        />
+        <Route
+          path="/logout"
+          element={<Logout setIsAuthenticated={setIsAuthenticated} />}
+        />
 
-      {/* --- ROUTES ADMIN PROTÉGÉES --- */}
-      <Route
-        path="/admin"
-        element={
-          <ProtectedRoute isAllowed={isAuthenticated} redirectPath="/login">
-            <AdminLayout />
-          </ProtectedRoute>
-        }
-      >
-        {/* URL: /admin */}
-        <Route index element={<AdminDashboard />} />
+        {/* --- ROUTES ADMIN PROTÉGÉES --- */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute isAllowed={isAuthenticated} redirectPath="/login">
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<AdminDashboard />} />
+          <Route path="projects" element={<ProjectsAdminPage />} />
+          <Route path="forms" element={<AdminFormSubmissions />} />
+          <Route path="projets" element={<AdminProjects />} />
+          <Route path="settings" element={<AdminSettings />} />
+        </Route>
 
-        {/* URL: /admin/projects -> Utilise la version avec Formulaire & Table */}
-        <Route path="projects" element={<ProjectsAdminPage />} />
-
-        {/* URL: /admin/forms -> Pour voir les messages reçus */}
-        <Route path="forms" element={<AdminFormSubmissions />} />
-        <Route path="projets" element={<AdminProjects />} />
-
-        {/* URL: /admin/settings -> Pour changer ton profil */}
-        <Route path="settings" element={<AdminSettings />} />
-      </Route>
-
-      {/* --- 404 GLOBALE --- */}
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+        {/* --- 404 GLOBALE --- */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </ThemeProvider>
   );
 }
 

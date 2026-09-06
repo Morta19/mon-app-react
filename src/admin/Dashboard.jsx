@@ -22,8 +22,8 @@ const AdminDashboard = () => {
 
   // 2. FONCTION DE DÉCONNEXION
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.clear();
+    localStorage.removeItem("authToken");
+    // preserve other localStorage keys if present; only clear session storage
     sessionStorage.clear();
     window.location.replace("/login");
   };
@@ -39,8 +39,8 @@ const AdminDashboard = () => {
           setProjectCount(projects.length);
         }
 
-        // Récupération des messages
-        const resMsg = await fetch(`${API_BASE}/messages`);
+        // Récupération des formulaires de contact
+        const resMsg = await fetch(`${API_BASE}/formSubmissions`);
         if (resMsg.ok) {
           const messages = await resMsg.json();
           setMessageCount(messages.length);
@@ -180,7 +180,7 @@ const AdminDashboard = () => {
 
         {/* System Status */}
         <div className="bg-gradient-to-b from-blue-600 to-indigo-700 rounded-3xl p-8 shadow-2xl relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
+          <div className="absolute top-0 right-0 hidden sm:block w-48 md:w-64 h-48 md:h-64 bg-white/10 rounded-full blur-3xl -mr-12 -mt-12"></div>
           <h2 className="text-xl font-black italic tracking-tighter mb-4 relative z-10 uppercase">
             System Status
           </h2>

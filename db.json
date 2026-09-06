@@ -26,72 +26,209 @@
       "priorité": "moyenne",
       "status": "new",
       "createdAt": "2025-12-22T16:46:13.186Z"
+    },
+    {
+      "id": "503c",
+      "nom": "morta",
+      "email": "morta@morta.morta",
+      "message": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "priorité": "moyenne",
+      "createdAt": "2026-09-06T22:08:47.227Z",
+      "status": "new"
+    },
+    {
+      "id": "297e",
+      "nom": "ppp",
+      "email": "wa@wa.wa",
+      "message": "mmmmmmmmmmm",
+      "priorité": "moyenne",
+      "createdAt": "2026-09-06T22:09:53.329Z",
+      "status": "new"
+    },
+    {
+      "id": "bd0d",
+      "nom": "aaa",
+      "email": "bb@b.b",
+      "message": "bbbbbbbbbb",
+      "priorité": "moyenne",
+      "createdAt": "2026-09-06T22:12:15.602Z",
+      "status": "new"
+    },
+    {
+      "id": "0528",
+      "nom": "ggg",
+      "email": "g@g.g",
+      "message": "ggggggggggg",
+      "priorité": "moyenne",
+      "createdAt": "2026-09-06T22:13:16.382Z",
+      "status": "new"
+    },
+    {
+      "id": "473f",
+      "nom": "bbbb",
+      "email": "bb@bb.b",
+      "message": "bbbbbbbbbb",
+      "priorité": "moyenne",
+      "createdAt": "2026-09-06T22:16:20.460Z",
+      "status": "new"
+    },
+    {
+      "id": "67b6",
+      "nom": "bbb",
+      "email": "aaaaa@aa.aaa",
+      "message": "aaaaaaaaaaaa",
+      "priorité": "moyenne",
+      "createdAt": "2026-09-06T22:28:38.077Z",
+      "status": "new"
+    },
+    {
+      "id": "3faf",
+      "nom": "bbb",
+      "email": "oooo@o.o",
+      "message": "bbbbbbbbbbbbbb",
+      "priorité": "moyenne",
+      "createdAt": "2026-09-06T22:29:52.808Z",
+      "status": "new"
+    },
+    {
+      "id": "3c2f",
+      "nom": "jjjj",
+      "email": "o@o.o",
+      "message": "bbbbbbbbbbbbbb",
+      "priorité": "moyenne",
+      "createdAt": "2026-09-06T22:32:30.487Z",
+      "status": "new"
+    },
+    {
+      "id": "e8ed",
+      "nom": "ooo",
+      "email": "gggg@h.h",
+      "message": "jjjjjjjjjjjjjjjjjjjjjjjjj",
+      "priorité": "moyenne",
+      "createdAt": "2026-09-06T22:33:51.598Z",
+      "status": "new"
+    },
+    {
+      "id": "f73d",
+      "nom": "hhh",
+      "email": "h@h.h",
+      "message": "wwwwwwwwwww",
+      "priorité": "moyenne",
+      "createdAt": "2026-09-06T22:40:25.967Z",
+      "status": "new"
+    },
+    {
+      "id": "4ce4",
+      "nom": "wwww",
+      "email": "w@w.w",
+      "tel": "444444",
+      "message": "aaaaaaaaaa",
+      "priorité": "moyenne",
+      "createdAt": "2026-09-06T22:45:26.363Z",
+      "status": "new"
+    },
+    {
+      "id": "70c7",
+      "nom": "aaaa",
+      "email": "kkk@kk.kk",
+      "tel": "55555555",
+      "message": "jjjjjjjjjjjjjjjjjjj",
+      "priorité": "moyenne",
+      "createdAt": "2026-09-06T22:48:10.806Z",
+      "status": "new"
+    },
+    {
+      "id": "8923",
+      "nom": "iiiiiiii",
+      "email": "i@i.i",
+      "tel": "444444444",
+      "message": "kkkkkkkkkkkkkkkkkk",
+      "priorité": "moyenne",
+      "createdAt": "2026-09-06T22:50:37.816Z",
+      "status": "new"
+    },
+    {
+      "id": "bf34",
+      "nom": "ooooooooo",
+      "email": "bbbbb@b.b",
+      "tel": "444444",
+      "message": "bbbbbbbbbbbb",
+      "priorité": "moyenne",
+      "createdAt": "2026-09-06T22:53:05.275Z",
+      "status": "new"
     }
   ],
   "projects": [
     {
-      "id": "2",
-      "title": "Portfolio 3D Architecture",
-      "description": "Visualisation 3D de façades et d'intérieurs pour clients immobiliers.",
+      "id": "smartcity",
+      "title": "Plateforme Smart City — Gestion des incidents urbains",
+      "description": "Plateforme intelligente de signalement et gestion des incidents urbains. Développée dans le cadre du projet de fin d'études chez BACAB Consulting, la solution combine une interface web React, API Flask et composants backend en microservices pour l'ingestion, la classification et la visualisation des incidents.",
       "techStack": [
         "React",
-        "Three.js"
+        "Flask",
+        "REST API",
+        "Microservices",
+        "YOLOv8",
+        "JWT"
       ],
-      "githubUrl": "https://github.com/ton-compte/archi-3d",
-      "liveUrl": null,
-      "status": "in-progress"
+      "githubUrl": "",
+      "liveUrl": "",
+      "status": "completed",
+      "year": "2026",
+      "role": "Développeur Full-Stack & IA",
+      "features": [
+        "Classification automatique d'incidents avec YOLOv8",
+        "Géolocalisation et gestion des signalements",
+        "Tableaux de bord pour le suivi des incidents",
+        "Gestion des rôles et authentification JWT",
+        "Notifications par e-mail"
+      ]
     },
     {
-      "id": "4268",
-      "title": "Flask REST API avec CI/CD Azure DevOps",
-      "description": "API REST professionnelle développée avec Flask et intégrée à Azure DevOps pour la gestion du code source, pipelines CI/CD, conteneurisation Docker et déploiement automatique sur machine virtuelle Azure.",
+      "id": "gestion-stock",
+      "title": "Application de gestion de stock",
+      "description": "Application de gestion des stocks développée dans le cadre d'un projet chez BACAB Consulting. Architecture microservices avec APIs REST, gestion des utilisateurs, produits et réservations.",
       "techStack": [
         "Flask",
-        "Python",
-        "Docker",
-        "Azure DevOps",
-        "Git",
-        "REST API"
+        "Vue.js",
+        "REST API",
+        "Microservices"
       ],
-      "status": "offline",
       "githubUrl": "",
-      "liveUrl": ""
-    },
-    {
-      "id": "5a49",
-      "title": "Jeu Unity 3D – Collecte & Score",
-      "description": "Jeu 3D développé avec Unity où le joueur contrôle une sphère pour collecter des objets, éviter des obstacles et atteindre un objectif final avec système de score, messages de victoire et défaite.",
-      "techStack": [
-        "Unity 3D",
-        "C#",
-        "Physics Engine"
-      ],
-      "status": "offline",
-      "githubUrl": "",
-      "liveUrl": ""
+      "liveUrl": "",
+      "status": "completed",
+      "year": "2025",
+      "role": "Développeur Full-Stack",
+      "distinction": "Meilleur Projet Innovant — Certificat d'excellence",
+      "features": [
+        "Gestion utilisateurs, produits et réservations",
+        "APIs REST pour services métier",
+        "Conception orientée microservices"
+      ]
     }
   ],
   "users": [
     {
       "id": "1",
-      "email": "morta@morta.com",
-      "password": "morta",
-      "name": "Admin 21C",
+      "email": "admin@example.com",
+      "password": "motdepasse_test",
+      "name": "Admin de test",
       "role": "admin"
     },
     {
       "id": "2",
-      "email": "user@21c-digital.com",
-      "password": "user123",
-      "name": "User 21C",
+      "email": "user@example.com",
+      "password": "motdepasse_user_test",
+      "name": "Utilisateur de test",
       "role": "user"
     }
   ],
   "profile": {
-    "name": "Mortadha Masmoudi",
-    "role": "Développeur Full-Stack",
-    "avatar": "https://votre-image.com/photo.jpg",
-    "bio": "Passionné par le design et le code...",
-    "email": "mortadhahassenmasmoudi@gmail.com"
+    "name": "Mortadha Hassen MASMOUDI",
+    "role": "Développeur full-stack",
+    "avatar": "",
+    "bio": "Développeur full-stack spécialisé en applications web et solutions IA.",
+    "email": "Mortadhahassenmasmoudi@gmail.com",
+    "phone": "+216 54686444"
   }
 }

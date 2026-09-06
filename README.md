@@ -1,16 +1,59 @@
-# React + Vite
+# Portfolio React/Vite
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Portfolio personnel de Mortadha Hassen MASMOUDI, avec pages publiques, projets, formulaire de contact et espace d'administration.
 
-Currently, two official plugins are available:
+## Prerequis
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Node.js 20 ou superieur
+- npm
 
-## React Compiler
+## Installation
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+npm install
+Copy-Item .env.example .env.local
+```
 
-## Expanding the ESLint configuration
+Dans `.env.local`, definir l'URL de l'API :
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```env
+VITE_API_URL=http://localhost:4000
+```
+
+Ne jamais committer `.env.local` ni de vraies informations d'identification.
+
+## Lancement local
+
+Dans un premier terminal :
+
+```bash
+npm run api
+```
+
+Dans un second terminal :
+
+```bash
+npm run dev
+```
+
+L'application est ensuite disponible sur l'URL affichee par Vite.
+
+## Scripts
+
+```bash
+npm run dev      # serveur Vite de developpement
+npm run api      # json-server local sur le port 4000
+npm run build    # build de production
+npm run preview  # previsualisation du build
+npm run lint     # ESLint
+```
+
+## Variables d'environnement
+
+| Variable       | Description                           |
+| -------------- | ------------------------------------- |
+| `VITE_API_URL` | URL de l'API utilisee par le frontend |
+
+## Limites de production
+
+`json-server` et `db.json` servent uniquement au developpement local. Ils ne constituent pas un backend de production : les utilisateurs, les mots de passe et les donnees sont stockes sans authentification serveur ni hashage. Avant un deploiement public, remplacer cette API par un backend securise avec une vraie base de donnees et une authentification cote serveur.

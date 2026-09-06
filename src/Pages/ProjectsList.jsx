@@ -1,26 +1,52 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState, useRef } from "react";
 import { FaArrowRight, FaCode, FaRocket } from "react-icons/fa";
+import { FaTimes } from "react-icons/fa";
+import localData from "../../db.json";
+import mortaImg from "../assets/morta.jpg";
 
 const ProjectsList = () => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [techSearch, setTechSearch] = useState("");
+  const [selectedProject, setSelectedProject] = useState(null);
+  const [featured, setFeatured] = useState(null);
 
   // RÉCUPÉRATION DE L'URL DE BASE DEPUIS .env.local (Vite)
   const API_BASE = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     async function loadProjects() {
+      setLoading(true);
+      setError(null);
+
+      // Fallback local: si aucune API distante n'est configurée, utiliser le fichier db.json
       if (!API_BASE) {
-        console.error("VITE_API_URL n'est pas définie dans le fichier .env");
+        try {
+          const data =
+            localData && Array.isArray(localData.projects)
+              ? localData.projects
+              : [];
+          const visibleProjects = data.filter((p) => p.status !== "archived");
+          setProjects(visibleProjects);
+          // Définir un projet mis en avant: recherche par mot-clé 'smart' ou fallback
+          const smart = visibleProjects.find(
+            (p) =>
+              (p.title || "").toLowerCase().includes("smart") ||
+              (p.description || "").toLowerCase().includes("smart city"),
+          );
+          setFeatured(smart || visibleProjects[0] || null);
+        } catch (err) {
+          console.error("Erreur lecture locale projects:", err);
+          setError("Impossible de charger la galerie de projets (local).");
+        } finally {
+          setLoading(false);
+        }
         return;
       }
 
       try {
-        setLoading(true);
-        setError(null);
-
         const res = await fetch(`${API_BASE}/projects`);
         if (!res.ok) throw new Error("Erreur serveur lors de la récupération");
 
@@ -29,6 +55,12 @@ const ProjectsList = () => {
         // Filtrage : on ne montre pas les projets archivés
         const visibleProjects = data.filter((p) => p.status !== "archived");
         setProjects(visibleProjects);
+        const smart = visibleProjects.find(
+          (p) =>
+            (p.title || "").toLowerCase().includes("smart") ||
+            (p.description || "").toLowerCase().includes("smart city"),
+        );
+        setFeatured(smart || visibleProjects[0] || null);
       } catch (err) {
         console.error("Erreur List:", err);
         setError("Impossible de charger la galerie de projets.");
@@ -39,19 +71,86 @@ const ProjectsList = () => {
     loadProjects();
   }, [API_BASE]);
 
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "Escape") setSelectedProject(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  // Refs for modal focus management
+  const modalRef = useRef(null);
+  const lastActiveRef = useRef(null);
+  const mainRef = useRef(null);
+
+  useEffect(() => {
+    if (selectedProject) {
+      // store last active element
+      lastActiveRef.current = document.activeElement;
+      // hide background from assistive tech
+      if (mainRef.current) mainRef.current.setAttribute("aria-hidden", "true");
+      // prevent background scroll
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+
+      // focus first focusable in modal
+      const focusable = modalRef.current.querySelectorAll(
+        'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])',
+      );
+      const first = focusable[0];
+      if (first) first.focus();
+
+      const trap = (e) => {
+        if (e.key === "Escape") {
+          setSelectedProject(null);
+          e.preventDefault();
+          return;
+        }
+        if (e.key === "Tab") {
+          // focus trap
+          const focusableEls = Array.from(focusable).filter(
+            (el) => el.offsetParent !== null,
+          );
+          if (focusableEls.length === 0) return;
+          const firstEl = focusableEls[0];
+          const lastEl = focusableEls[focusableEls.length - 1];
+          if (!e.shiftKey && document.activeElement === lastEl) {
+            firstEl.focus();
+            e.preventDefault();
+          }
+          if (e.shiftKey && document.activeElement === firstEl) {
+            lastEl.focus();
+            e.preventDefault();
+          }
+        }
+      };
+
+      window.addEventListener("keydown", trap);
+
+      return () => {
+        window.removeEventListener("keydown", trap);
+        document.body.style.overflow = prev || "";
+        if (mainRef.current) mainRef.current.removeAttribute("aria-hidden");
+        // restore focus
+        lastActiveRef.current?.focus();
+      };
+    }
+  }, [selectedProject]);
+
   if (loading)
     return (
-      <div className="min-h-screen bg-[#050505] flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-[var(--accent)]/20 border-t-[var(--accent)] rounded-full animate-spin"></div>
       </div>
     );
 
   return (
-    <section className="min-h-screen bg-[#050505] text-white py-32 px-6 relative overflow-hidden">
+    <section className="min-h-screen bg-grid text-[var(--ink)] py-32 px-6 relative overflow-hidden">
       {/* Effets de lumière en arrière-plan */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-blue-600/5 rounded-full blur-[120px] -z-0"></div>
+      <div className="hidden sm:block absolute top-0 left-1/2 -translate-x-1/2 w-[600px] md:w-[1000px] h-[320px] md:h-[600px] bg-blue-600/5 rounded-full blur-[120px] -z-0" />
 
-      <div className="max-w-7xl mx-auto relative z-10">
+      <div className="max-w-7xl mx-auto relative z-10" ref={mainRef}>
         <header className="mb-20 space-y-4">
           <div className="flex items-center gap-3">
             <span className="h-[1px] w-12 bg-blue-500"></span>
@@ -59,9 +158,9 @@ const ProjectsList = () => {
               Portfolio
             </span>
           </div>
-          <h1 className="text-6xl md:text-8xl font-black italic tracking-tighter uppercase leading-none">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black italic tracking-tighter uppercase leading-none">
             Projets <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-zinc-100 to-zinc-500">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[rgba(15,27,45,0.9)] to-[var(--accent)]">
               Sélectionnés.
             </span>
           </h1>
@@ -74,109 +173,283 @@ const ProjectsList = () => {
             </p>
           </div>
         ) : (
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {projects.map((project) => {
-              // --- SÉCURISATION DU TECHSTACK ---
-              // On s'assure que techArray est toujours un tableau pour éviter le crash .map()
-              let techArray = [];
-              if (Array.isArray(project.techStack)) {
-                techArray = project.techStack;
-              } else if (typeof project.techStack === "string") {
-                techArray = project.techStack.split(",").map((t) => t.trim());
-              }
+          <>
+            {/* CONTROLS */}
+            <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div className="flex items-center gap-3">
+                {["all", "online", "in-progress", "offline"].map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setFilterStatus(s)}
+                    className={`px-3 py-2 text-xs font-mono uppercase tracking-widest border rounded-full ${filterStatus === s ? "bg-blue-500 text-white border-blue-500" : "bg-transparent text-zinc-400 border-white/5"}`}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
 
-              return (
-                <Link
-                  to={`/projects/${project.id}`}
-                  key={project.id}
-                  className="group relative bg-zinc-900/30 border border-white/5 rounded-[2rem] overflow-hidden hover:border-blue-500/50 transition-all duration-500 backdrop-blur-sm"
-                >
-                  {/* Overlay Gradient au hover */}
-                  <div className="absolute inset-0 bg-gradient-to-b from-blue-600/0 to-blue-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <div className="flex items-center gap-3">
+                <input
+                  value={techSearch}
+                  onChange={(e) => setTechSearch(e.target.value)}
+                  placeholder="Rechercher une techno (React, Flask...)"
+                  className="px-4 py-2 bg-transparent border border-white/5 rounded-md text-sm"
+                />
+              </div>
+            </div>
 
-                  {/* Visuel du haut */}
-                  <div className="h-48 relative overflow-hidden">
-                    {project.image ? (
-                      <img
-                        src={project.image}
-                        alt={project.title}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-60 group-hover:opacity-100"
-                      />
-                    ) : (
-                      <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-zinc-900 group-hover:scale-110 transition-transform duration-700"></div>
-                    )}
-
-                    {/* Badge Statut */}
-                    <div className="absolute top-6 right-6">
-                      <span
-                        className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${
-                          project.status === "online"
-                            ? "bg-green-500/10 border-green-500/20 text-green-400"
-                            : "bg-blue-500/10 border-blue-500/20 text-blue-400"
-                        }`}
-                      >
-                        {project.status || "Publié"}
-                      </span>
-                    </div>
-                    {!project.image && (
-                      <FaCode className="absolute bottom-6 left-6 text-white/10 text-6xl group-hover:text-blue-500/20 transition-colors" />
-                    )}
+            {/* FEATURED */}
+            {featured && (
+              <div className="mb-8 border border-[var(--line)] rounded-2xl overflow-hidden bg-[var(--surface)] p-6">
+                <div className="flex flex-col md:flex-row items-center gap-6">
+                  <div className="w-full md:w-1/3 h-40 sm:h-48 md:h-40 overflow-hidden rounded-xl">
+                    <img
+                      src={featured.image || mortaImg}
+                      alt={featured.title}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
-
-                  {/* Contenu textuel */}
-                  <div className="p-8 space-y-4 relative">
-                    <h2 className="text-2xl font-bold tracking-tight group-hover:text-blue-400 transition-colors">
-                      {project.title}
+                  <div className="flex-1">
+                    <h3 className="text-2xl font-bold">Projet mis en avant</h3>
+                    <h2 className="text-3xl font-black my-2">
+                      {featured.title}
                     </h2>
-
-                    <p className="text-zinc-500 text-sm leading-relaxed line-clamp-3 font-medium">
-                      {project.description}
+                    <p className="text-zinc-400 line-clamp-3">
+                      {featured.description}
                     </p>
-
-                    {/* Tags de Tech Stack (Affichage sécurisé) */}
-                    <div className="flex flex-wrap gap-2 pt-2">
-                      {techArray.slice(0, 3).map((tech, index) => (
-                        <span
-                          key={index}
-                          className="text-[9px] font-black uppercase tracking-tighter px-2 py-1 bg-white/5 border border-white/5 rounded text-zinc-400"
+                    <div className="mt-4 flex items-center gap-4">
+                      {featured.liveUrl && (
+                        <a
+                          href={featured.liveUrl}
+                          className="px-4 py-2 btn-primary rounded-md text-sm"
                         >
-                          {tech}
+                          Voir en ligne
+                        </a>
+                      )}
+                      <button
+                        onClick={() => setSelectedProject(featured)}
+                        className="px-4 py-2 btn-ghost rounded-md text-sm"
+                      >
+                        Détails
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              {projects.map((project, idx) => {
+                // --- SÉCURISATION DU TECHSTACK ---
+                // On s'assure que techArray est toujours un tableau pour éviter le crash .map()
+                let techArray = [];
+                if (Array.isArray(project.techStack)) {
+                  techArray = project.techStack;
+                } else if (typeof project.techStack === "string") {
+                  techArray = project.techStack.split(",").map((t) => t.trim());
+                }
+
+                return (
+                  <div
+                    key={project.id}
+                    onClick={() => setSelectedProject(project)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ")
+                        setSelectedProject(project);
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    className="group relative card overflow-hidden hover:border-[var(--accent)]/50 transition-all duration-500 backdrop-blur-sm animate-rise cursor-pointer"
+                    style={{ animationDelay: `${idx * 80}ms` }}
+                  >
+                    <div className="project-idx">
+                      #{String(idx + 1).padStart(2, "0")}
+                    </div>
+                    <div className="project-category">
+                      {project.id === "smartcity"
+                        ? "Projet principal"
+                        : "Projet"}
+                    </div>
+                    {/* Overlay Gradient au hover */}
+                    <div className="absolute inset-0 bg-gradient-to-b from-blue-600/0 to-blue-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
+                    {/* Visuel du haut */}
+                    <div className="h-40 sm:h-48 md:h-56 relative overflow-hidden">
+                      {project.image ? (
+                        <img
+                          loading="lazy"
+                          src={project.image}
+                          alt={project.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 bg-gradient-to-br from-[var(--surface-3)] to-[var(--surface-2)] group-hover:scale-105 transition-transform duration-700 flex items-center justify-center">
+                          <div className="text-[var(--muted-2)] font-bold px-6 text-center">
+                            {project.title}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Badge Statut */}
+                      <div className="absolute top-6 right-6">
+                        <span
+                          className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${
+                            project.status === "online"
+                              ? "bg-green-500/10 border-green-500/20 text-green-400"
+                              : "bg-blue-500/10 border-blue-500/20 text-blue-400"
+                          }`}
+                        >
+                          {project.status || "Publié"}
                         </span>
-                      ))}
-                      {techArray.length > 3 && (
-                        <span className="text-[9px] font-black text-zinc-600">
-                          +{techArray.length - 3}
-                        </span>
+                      </div>
+                      {!project.image && (
+                        <FaCode className="absolute bottom-6 left-6 text-white/10 text-6xl group-hover:text-blue-500/20 transition-colors" />
                       )}
                     </div>
 
-                    <div className="pt-6 flex items-center justify-between border-t border-white/5">
-                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white flex items-center gap-2">
-                        Détails{" "}
-                        <FaArrowRight className="group-hover:translate-x-2 transition-transform" />
-                      </span>
-                      <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-blue-600 transition-colors">
-                        <FaRocket
-                          size={12}
-                          className="group-hover:text-white text-zinc-500"
-                        />
+                    {/* Contenu textuel */}
+                    <div className="p-6 md:p-8 space-y-4 relative">
+                      <h2 className="text-2xl font-bold tracking-tight group-hover:text-[var(--accent)] transition-colors">
+                        {project.title}
+                      </h2>
+
+                      <p className="text-[var(--muted-2)] text-sm leading-relaxed line-clamp-3 font-medium">
+                        {project.description}
+                      </p>
+
+                      {/* Tags de Tech Stack (Affichage sécurisé) */}
+                      <div className="flex flex-wrap gap-2 pt-2">
+                        {techArray.map((tech, index) => (
+                          <span key={index} className="tech-chip" title={tech}>
+                            {tech}
+                          </span>
+                        ))}
+                      </div>
+
+                      <div className="pt-6 flex items-center justify-between border-t border-[var(--line)]">
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--muted-2)] flex items-center gap-2">
+                          Détails{" "}
+                          <FaArrowRight className="group-hover:translate-x-2 transition-transform" />
+                        </span>
+                        <div className="w-9 h-9 rounded-full bg-[var(--surface-2)] flex items-center justify-center group-hover:bg-[var(--accent)] transition-colors">
+                          <FaRocket
+                            size={12}
+                            className="group-hover:text-white text-[var(--muted-2)]"
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
-                </Link>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          </>
         )}
 
         {!loading && projects.length === 0 && !error && (
-          <div className="text-center py-20 border border-dashed border-white/10 rounded-[3rem]">
+          <div className="text-center py-20 border border-dashed border-[var(--line)] rounded-2xl">
             <p className="text-zinc-500 font-mono uppercase tracking-widest">
               Aucun projet déployé pour le moment.
             </p>
           </div>
         )}
       </div>
+
+      {/* PROJECT MODAL */}
+      {selectedProject && (
+        <div
+          className="modal-backdrop"
+          onMouseDown={(e) => {
+            if (e.target.classList.contains("modal-backdrop"))
+              setSelectedProject(null);
+          }}
+        >
+          <div
+            className="modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modal-title"
+            ref={modalRef}
+            tabIndex={-1}
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <h2 id="modal-title" className="text-2xl font-bold">
+                  {selectedProject.title}
+                </h2>
+                <p className="text-sm text-[var(--muted-2)] mt-2">
+                  {selectedProject.description}
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedProject(null)}
+                className="btn-ghost"
+                aria-label="Fermer la fenêtre de détails"
+              >
+                <FaTimes />
+              </button>
+            </div>
+
+            <div className="mt-6 grid md:grid-cols-2 gap-6">
+              <div>
+                <div className="w-full h-56 bg-[var(--surface-3)] rounded-md overflow-hidden">
+                  {selectedProject.image ? (
+                    <img
+                      loading="lazy"
+                      src={selectedProject.image}
+                      alt={selectedProject.title}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : null}
+                </div>
+                <div className="mt-4">
+                  <h4 className="font-display text-lg font-semibold">
+                    Contexte & Rôle
+                  </h4>
+                  <p className="text-[var(--muted-2)] text-sm mt-2">
+                    {selectedProject.role ||
+                      (selectedProject.title.includes("Smart")
+                        ? "Full-Stack + IA"
+                        : "Full-Stack + Microservices")}
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-display text-lg font-semibold">
+                  Fonctionnalités
+                </h4>
+                <ul className="list-disc list-inside mt-2 text-[var(--muted-2)]">
+                  {(selectedProject.features || []).map((f, i) => (
+                    <li key={i}>{f}</li>
+                  ))}
+                </ul>
+
+                <h4 className="font-display text-lg font-semibold mt-4">
+                  Technologies
+                </h4>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {(Array.isArray(selectedProject.techStack)
+                    ? selectedProject.techStack
+                    : (selectedProject.techStack || "").split(",")
+                  ).map((t, i) => (
+                    <span key={i} className="tech-chip">
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {selectedProject.distinction && (
+              <div className="mt-6 border-t pt-4 text-sm text-[var(--muted-2)]">
+                <strong>Distinction: </strong>
+                {selectedProject.distinction}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </section>
   );
 };

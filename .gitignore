@@ -27,7 +27,8 @@ dist/
 build/
 .env
 .env.local
-.env.
+.env.production
+.history/
 .local.DS_Store
 .lognpm-debug.logyarn-debug.log
 yarn-error.log*

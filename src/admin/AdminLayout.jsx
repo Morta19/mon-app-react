@@ -1,18 +1,20 @@
 import React from "react";
-import { Outlet, Link, useNavigate, useLocation } from "react-router-dom";
+import { Outlet, Link, useLocation } from "react-router-dom";
 import {
-  FaHome,
+  FaTachometerAlt,
   FaFolderOpen,
+  FaProjectDiagram,
   FaEnvelope,
-  FaTools,
+  FaCog,
   FaSignOutAlt,
   FaArrowLeft,
   FaShieldAlt,
   FaTerminal,
 } from "react-icons/fa";
 
+import mortaImg from "../assets/morta.jpg";
+
 const AdminLayout = () => {
-  const navigate = useNavigate();
   const location = useLocation();
 
   function handleLogout() {
@@ -21,40 +23,42 @@ const AdminLayout = () => {
   }
 
   const menuItems = [
-    { name: "Dashboard", path: "/admin", icon: <FaHome /> },
-    { name: "ajouter", path: "/admin/projects", icon: <FaFolderOpen /> },
-    { name: "Mes Projets", path: "/admin/projets", icon: <FaTerminal /> },
+    { name: "Dashboard", path: "/admin", icon: <FaTachometerAlt /> },
+    { name: "Ajouter", path: "/admin/projects", icon: <FaFolderOpen /> },
+    { name: "Mes Projets", path: "/admin/projets", icon: <FaProjectDiagram /> },
     { name: "Messages", path: "/admin/forms", icon: <FaEnvelope /> },
-    { name: "Paramètres", path: "/admin/settings", icon: <FaTools /> },
+    { name: "Paramètres", path: "/admin/settings", icon: <FaCog /> },
   ];
 
   return (
-    <div className="flex h-screen bg-[#030304] text-zinc-300 font-sans selection:bg-blue-500/30">
+    <div className="flex min-h-screen bg-[#030304] text-zinc-300 font-sans selection:bg-blue-500/30">
       {/* --- SIDEBAR DESIGN ULTRA-MODERNE --- */}
-      <aside className="w-72 flex flex-col relative z-20 group">
+      <aside className="w-16 md:w-72 flex flex-col relative z-20 group">
         {/* Ligne de séparation verticale lumineuse */}
         <div className="absolute right-0 top-0 h-full w-px bg-gradient-to-b from-transparent via-white/5 to-transparent"></div>
 
         {/* Profil Header */}
-        <div className="p-8 mb-4">
-          <div className="flex flex-col gap-4">
-            <div className="relative w-14 h-14">
-              <div className="absolute inset-0 bg-gradient-to-tr from-blue-600 to-cyan-400 rounded-2xl rotate-6 group-hover:rotate-12 transition-transform duration-500 opacity-20"></div>
-              <div className="relative w-full h-full bg-[#0d0d0f] border border-white/10 rounded-2xl flex items-center justify-center overflow-hidden shadow-2xl">
-                <span className="text-xl font-black italic text-white">M.</span>
-                <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-[#0d0d0f] rounded-full"></div>
-              </div>
+        <div className="p-6 mb-4 flex items-center gap-4">
+          <div className="relative w-12 h-12 md:w-14 md:h-14 flex-shrink-0">
+            <div className="absolute inset-0 bg-gradient-to-tr from-blue-600 to-cyan-400 rounded-2xl rotate-6 group-hover:rotate-12 transition-transform duration-500 opacity-20"></div>
+            <div className="relative w-full h-full bg-[#0d0d0f] border border-white/10 rounded-2xl flex items-center justify-center overflow-hidden shadow-2xl">
+              <img
+                src={mortaImg}
+                alt={"Portrait de Mortadha"}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-[#0d0d0f] rounded-full" />
             </div>
-            <div>
-              <h2 className="text-lg font-black text-white tracking-tighter uppercase italic leading-none">
-                Masmoudi<span className="text-blue-500">.</span>
-              </h2>
-              <div className="flex items-center gap-2 mt-2">
-                <div className="h-[1px] w-4 bg-blue-500/50"></div>
-                <p className="text-[8px] text-zinc-500 font-black uppercase tracking-[0.3em]">
-                  Admin System
-                </p>
-              </div>
+          </div>
+          <div className="hidden md:block">
+            <h2 className="text-lg font-black text-white tracking-tighter uppercase italic leading-none">
+              Masmoudi<span className="text-blue-500">.</span>
+            </h2>
+            <div className="flex items-center gap-2 mt-2">
+              <div className="h-[1px] w-4 bg-blue-500/50" />
+              <p className="text-[8px] text-zinc-500 font-black uppercase tracking-[0.3em]">
+                Admin System
+              </p>
             </div>
           </div>
         </div>
@@ -67,7 +71,7 @@ const AdminLayout = () => {
               <Link
                 key={item.name}
                 to={item.path}
-                className={`relative group flex items-center gap-4 px-5 py-4 rounded-xl transition-all duration-500 overflow-hidden ${
+                className={`relative group flex items-center gap-4 px-4 md:px-5 py-3 md:py-4 rounded-xl transition-all duration-500 overflow-hidden ${
                   isActive
                     ? "text-white bg-white/[0.03]"
                     : "text-zinc-500 hover:text-zinc-200"
@@ -88,7 +92,7 @@ const AdminLayout = () => {
                   {item.icon}
                 </span>
 
-                <span className="text-[10px] font-black uppercase tracking-[0.2em]">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] hidden md:inline">
                   {item.name}
                 </span>
 
@@ -121,7 +125,7 @@ const AdminLayout = () => {
       </aside>
 
       {/* --- MAIN CONTENT ZONE --- */}
-      <main className="flex-1 p-4 relative overflow-hidden">
+      <main className="flex-1 p-4 relative overflow-hidden ml-16 md:ml-72">
         {/* Glows d'ambiance en arrière-plan */}
         <div className="absolute top-[-10%] right-[-5%] w-[40%] h-[40%] bg-blue-600/10 blur-[120px] rounded-full pointer-events-none"></div>
         <div className="absolute bottom-[-10%] left-[20%] w-[30%] h-[30%] bg-purple-600/5 blur-[120px] rounded-full pointer-events-none"></div>
@@ -161,7 +165,7 @@ const AdminLayout = () => {
 
           {/* Contenu - Outlet */}
           <div className="flex-1 overflow-y-auto custom-scrollbar">
-            <div className="p-10 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+            <div className="p-6 md:p-10 animate-in fade-in slide-in-from-bottom-4 duration-1000">
               <Outlet />
             </div>
           </div>

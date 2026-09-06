@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import { FaTrash, FaInbox, FaUser, FaEnvelope, FaCircle } from "react-icons/fa";
 
-// URL DE VOTRE MOCKAPI
-const MOCK_API_URL =
-  "https://69497e321282f890d2d65641.mockapi.io/api/v1/formSubmissions";
+const MOCK_API_URL = `${import.meta.env.VITE_API_URL}/formSubmissions`;
 
 function AdminFormSubmissions() {
   const [submissions, setSubmissions] = useState([]);
@@ -20,7 +18,7 @@ function AdminFormSubmissions() {
 
       // Tri par date : les plus récents en haut
       setSubmissions(
-        data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)),
       );
     } catch (err) {
       setError("Impossible de charger les messages.");
@@ -64,6 +62,7 @@ function AdminFormSubmissions() {
         setSubmissions((prev) => prev.map((s) => (s.id === id ? updated : s)));
       }
     } catch (err) {
+      console.error("Erreur lors de la mise à jour du statut:", err);
       alert("Erreur lors de la mise à jour sur MockAPI");
     }
   }
@@ -80,6 +79,7 @@ function AdminFormSubmissions() {
         setSubmissions((prev) => prev.filter((s) => s.id !== id));
       }
     } catch (err) {
+      console.error("Erreur lors de la suppression du message:", err);
       alert("Erreur lors de la suppression sur le serveur");
     }
   }
@@ -176,7 +176,7 @@ function AdminFormSubmissions() {
                       value={s.status || "new"}
                       onChange={(e) => handleChangeStatus(s.id, e.target.value)}
                       className={`text-[11px] font-bold px-3 py-1.5 rounded-full border focus:outline-none cursor-pointer ${getStatusStyle(
-                        s.status || "new"
+                        s.status || "new",
                       )}`}
                     >
                       <option value="new">Nouveau</option>

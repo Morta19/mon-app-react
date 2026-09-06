@@ -6,105 +6,92 @@ const Footer = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const sitemap = [
+    { label: "À propos", href: "#about" },
+    { label: "Projets", href: "#projects" },
+    { label: "Expérience", href: "#experience" },
+    { label: "Contact", href: "#contact" },
+  ];
+
   return (
-    <footer className="bg-[#08080a] border-t border-white/5 py-12 relative overflow-hidden">
-      {/* Effet de lueur subtile en arrière-plan */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-px bg-gradient-to-r from-transparent via-blue-500/50 to-transparent"></div>
-
+    <footer className="relative bg-[var(--bg)] border-t border-[var(--line)] py-16">
       <div className="max-w-7xl mx-auto px-6">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-8">
-          {/* Brand / Logo Section */}
-          <div className="space-y-2 text-center md:text-left">
-            <h2 className="text-xl font-black italic tracking-tighter text-white">
-              MORTADHA<span className="text-blue-500">.</span>
+        <div className="grid md:grid-cols-3 gap-12 pb-12 border-b border-[var(--line)]">
+          <div className="space-y-3">
+            <h2 className="font-display text-2xl font-semibold text-[var(--ink)]">
+              Mortadha Hassen MASMOUDI
+              <span className="text-[var(--accent)]">.</span>
             </h2>
-            <p className="text-xs font-mono text-zinc-500 uppercase tracking-widest">
-              Full-Stack Developer & Innovator
+            <p className="font-mono text-xs text-[var(--ink-muted)] tracking-wide">
+              Développeur full-stack — Sfax, Tunisie
             </p>
+            <div className="pt-3 text-sm text-[var(--ink-muted)] font-mono">
+              <div>Tel: +216 54686444</div>
+              <div>
+                Email:{" "}
+                <a
+                  href="mailto:Mortadhahassenmasmoudi@gmail.com"
+                  className="hover:text-[var(--accent)]"
+                >
+                  Mortadhahassenmasmoudi@gmail.com
+                </a>
+              </div>
+            </div>
+            <div className="flex items-center gap-4 pt-2">
+              <a
+                href="https://github.com/Morta19"
+                target="_blank"
+                rel="noreferrer"
+                className="text-[var(--ink-muted)] hover:text-[var(--accent)] transition-colors text-lg"
+              >
+                <FaGithub />
+              </a>
+              <a
+                href="https://www.linkedin.com/in/mortadha-hassen-masmoudi-676530359/"
+                target="_blank"
+                rel="noreferrer"
+                className="text-[var(--ink-muted)] hover:text-[var(--accent)] transition-colors text-lg"
+              >
+                <FaLinkedin />
+              </a>
+            </div>
           </div>
 
-          {/* Social Links */}
-          <div className="flex items-center gap-6">
-            <a
-              href="https://github.com/Morta19"
-              target="_blank"
-              rel="noreferrer"
-              className="text-zinc-400 hover:text-white transition-colors text-xl"
-            >
-              <FaGithub />
-            </a>
-            <a
-              href="https://www.linkedin.com/in/mortadha-hassen-masmoudi-676530359/"
-              target="_blank"
-              rel="noreferrer"
-              className="text-zinc-400 hover:text-blue-500 transition-colors text-xl"
-            >
-              <FaLinkedin />
-            </a>
-            <a
-              href="https://www.instagram.com/mortadhamasmoudi/"
-              target="_blank"
-              rel="noreferrer"
-              className="text-zinc-400 hover:text-purple-500 transition-colors text-xl"
-            >
-              <FaInstagram />
-            </a>
+          <div>
+            <p className="font-mono text-[10px] tracking-widest text-[var(--ink-muted)] mb-4">
+              PLAN DU SITE
+            </p>
+            <ul className="space-y-2">
+              {sitemap.map((item) => (
+                <li key={item.label}>
+                  <a
+                    href={item.href}
+                    className="text-sm text-[var(--ink)] hover:text-[var(--accent)] transition-colors"
+                  >
+                    {item.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
           </div>
 
-          {/* Copyright Section */}
-          <div className="flex flex-col items-center md:items-end gap-4">
+          <div className="flex flex-col md:items-end justify-between">
             <button
               onClick={scrollToTop}
-              className="group flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] font-bold text-zinc-500 hover:text-white transition-all"
+              className="group flex items-center gap-2 text-xs font-mono tracking-widest text-[var(--ink-muted)] hover:text-[var(--ink)] transition-all"
             >
-              Back to top
+              Haut de page
               <FaArrowUp className="group-hover:-translate-y-1 transition-transform" />
             </button>
-            <span className="text-[11px] text-zinc-600 font-medium">
-              © {new Date().getFullYear()}{" "}
-              <span className="text-zinc-400">21C DIGITAL</span>. All Rights
-              Reserved.
+            <span className="text-[11px] text-[var(--ink-muted)] font-mono mt-6 md:mt-0">
+              © {new Date().getFullYear()} Mortadha Hassen MASMOUDI
             </span>
           </div>
         </div>
 
-        {/* Bottom Decorative Bar */}
-        <div className="mt-12 flex justify-center">
-          <ul className="flex flex-wrap justify-center gap-x-8 gap-y-2 text-[10px] uppercase tracking-widest font-bold text-zinc-500">
-            <li>
-              <a
-                href="#about"
-                className="hover:text-blue-500 transition-colors"
-              >
-                A propos
-              </a>
-            </li>
-            <li>
-              <a
-                href="#projects"
-                className="hover:text-blue-500 transition-colors"
-              >
-                Projets
-              </a>
-            </li>
-            <li>
-              <a
-                href="#experience"
-                className="hover:text-blue-500 transition-colors"
-              >
-                Expérience
-              </a>
-            </li>
-            <li>
-              <a
-                href="#contact"
-                className="hover:text-blue-500 transition-colors"
-              >
-                Contact
-              </a>
-            </li>
-          </ul>
-        </div>
+        <p className="pt-8 text-center text-[10px] font-mono text-[var(--ink-muted)] tracking-widest">
+          CONSTRUIT AVEC REACT · FLASK
+        </p>
       </div>
     </footer>
   );

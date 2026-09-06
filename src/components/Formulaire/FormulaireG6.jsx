@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   FaUser,
   FaEnvelope,
@@ -11,9 +11,8 @@ import {
 } from "react-icons/fa";
 import { sendEmail } from "../../emailService";
 
-// URL DE VOTRE MOCKAPI
-const MOCK_API_URL =
-  "https://69497e321282f890d2d65641.mockapi.io/api/v1/formSubmissions";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
+const FORM_SUBMISSIONS_URL = `${API_URL}/formSubmissions`;
 
 const ContactForm = () => {
   const [formValid, setFormValid] = useState({
@@ -29,8 +28,10 @@ const ContactForm = () => {
   const [formData, setFormData] = useState({
     nom: "",
     email: "",
+    tel: "",
     message: "",
     priorité: "moyenne",
+    sujet: "",
   });
 
   const [touched, setTouched] = useState({
@@ -38,6 +39,7 @@ const ContactForm = () => {
     email: false,
     message: false,
   });
+  const [submitAttempted, setSubmitAttempted] = useState(false);
 
   const validate = (data) => {
     const isNomValid = data.nom.trim().length >= 3;
@@ -73,38 +75,56 @@ const ContactForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitAttempted(true);
 
     const checks = validate(formData);
-    if (!checks.all) return;
+    if (!checks.all) {
+      // focus on first invalid field and announce
+      if (!checks.nom) {
+        document.getElementById("nom")?.focus();
+      } else if (!checks.email) {
+        document.getElementById("email")?.focus();
+      } else if (!checks.message) {
+        document.getElementById("message")?.focus();
+      }
+      return;
+    }
 
     setFormValid((prev) => ({ ...prev, sending: true }));
 
     try {
-      // ✅ 1. SAUVEGARDE SUR MOCKAPI (Remplace localhost/localStorage)
-      const response = await fetch(MOCK_API_URL, {
+      // 1. Sauvegarde locale pour l'affichage dans l'espace administrateur
+      const response = await fetch(FORM_SUBMISSIONS_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: formData.nom, // MockAPI attend souvent 'name'
+          nom: formData.nom,
           email: formData.email,
+          tel: formData.tel,
           message: formData.message,
-          priority: formData.priorité,
+          priorité: formData.priorité,
           createdAt: new Date().toISOString(),
+          status: "new",
         }),
       });
 
-      if (!response.ok) throw new Error("Erreur MockAPI");
+      if (!response.ok) throw new Error(`Erreur API (${response.status})`);
 
-      // 2. ENVOI DE L'EMAIL
-      try {
-        await sendEmail({
-          from_name: formData.nom,
-          reply_to: formData.email,
-          message: formData.message,
-          priority: formData.priorité,
-        });
-      } catch (emailErr) {
-        console.warn("EmailJS erreur, mais sauvé sur MockAPI.");
+      // 2. Envoi de l'e-mail via EmailJS
+      // Les noms ci-dessous doivent correspondre EXACTEMENT aux variables
+      // {{nom}}, {{time}}, {{email}}, {{tel}}, {{message}} utilisées dans le template EmailJS.
+      const emailResult = await sendEmail({
+        nom: formData.nom,
+        time: new Date().toLocaleString("fr-FR"),
+        email: formData.email,
+        tel: formData.tel || "Non renseigné",
+        message: formData.message,
+      });
+
+      if (!emailResult.success) {
+        alert(
+          `Message enregistré dans l'espace administrateur, mais l'e-mail n'a pas pu être envoyé. Erreur EmailJS : ${emailResult.error}`,
+        );
       }
 
       // 3. SUCCÈS VISUEL
@@ -115,7 +135,14 @@ const ContactForm = () => {
         send: false,
       }));
 
-      setFormData({ nom: "", email: "", message: "", priorité: "moyenne" });
+      setFormData({
+        nom: "",
+        email: "",
+        tel: "",
+        message: "",
+        priorité: "moyenne",
+        sujet: "",
+      });
       setTouched({ nom: false, email: false, message: false });
 
       setTimeout(() => {
@@ -128,194 +155,282 @@ const ContactForm = () => {
     }
   };
 
+  // Build accessible live error message when submission attempted
+  const liveErrors = [];
+  if (submitAttempted && !formValid.nom)
+    liveErrors.push("Le nom est trop court (3 caractères minimum).");
+  if (submitAttempted && !formValid.email)
+    liveErrors.push("L'email semble invalide.");
+  if (submitAttempted && !formValid.message)
+    liveErrors.push("Le message doit contenir au moins 10 caractères.");
+  const liveMessage = liveErrors.join(" ");
+
   return (
-    <section className="bg-[#08080a] text-white py-24 relative overflow-hidden">
-      <div className="absolute top-0 left-[-10%] w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px] -z-0"></div>
+    <section className="bg-[var(--bg)] text-[var(--ink)] py-20 relative overflow-hidden">
+      <div className="absolute -left-24 top-8 w-[420px] h-[420px] bg-gradient-to-br from-[rgba(11,109,240,0.06)] to-transparent rounded-full blur-3xl pointer-events-none"></div>
+      <div className="absolute right-0 bottom-[-60px] w-[360px] h-[360px] bg-gradient-to-tr from-[rgba(6,182,212,0.04)] to-transparent rounded-full blur-3xl pointer-events-none"></div>
 
-      <div className="max-w-7xl mx-auto px-6 relative z-10">
-        <div className="text-center mb-20">
-          <h2 className="text-sm font-mono text-blue-500 uppercase tracking-[0.4em] mb-4">
-            Connectons-nous
-          </h2>
-          <h3 className="text-5xl md:text-7xl font-black italic tracking-tighter">
-            DISCUTONS DE <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
-              VOTRE PROJET.
-            </span>
-          </h3>
-        </div>
+      <div className="max-w-6xl mx-auto px-6 relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          <div className="lg:col-span-5">
+            <div className="bg-[var(--surface)] border border-[var(--line)] rounded-3xl p-8 shadow-2xl">
+              <h2 className="text-sm font-mono text-[var(--accent)] uppercase tracking-widest mb-2">
+                Contact
+              </h2>
+              <h3 className="text-2xl font-display font-extrabold mb-4">
+                Mortadha Hassen MASMOUDI
+              </h3>
+              <p className="text-[var(--ink-muted)] mb-6">
+                Développeur full-stack
+              </p>
 
-        <div className="grid lg:grid-cols-12 gap-12 items-start">
-          <div className="lg:col-span-4 space-y-6">
-            <div className="bg-zinc-900/50 border border-white/5 p-8 rounded-[2rem] backdrop-blur-xl">
-              <h4 className="text-xl font-bold mb-8 italic">
-                Informations de contact
-              </h4>
-              <div className="space-y-8">
-                <div className="flex items-center gap-6 group">
-                  <div className="w-12 h-12 bg-blue-600/10 rounded-2xl flex items-center justify-center text-blue-500 group-hover:bg-blue-600 group-hover:text-white transition-all">
+              <div className="space-y-4">
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-lg bg-[var(--surface-3)] flex items-center justify-center text-[var(--accent)]">
+                    <FaPhoneAlt />
+                  </div>
+                  <div>
+                    <p className="text-xs text-[var(--ink-muted)] uppercase tracking-widest">
+                      Téléphone
+                    </p>
+                    <p className="font-bold">+216 54 686 444</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-lg bg-[var(--surface-3)] flex items-center justify-center text-[var(--accent)]">
                     <FaEnvelope />
                   </div>
                   <div>
-                    <p className="text-xs text-zinc-500 uppercase font-bold tracking-widest">
+                    <p className="text-xs text-[var(--ink-muted)] uppercase tracking-widest">
                       Email
                     </p>
-                    <p className="text-sm font-medium break-all">
+                    <p className="font-bold break-all">
                       mortadhahassenmasmoudi@gmail.com
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-6 group">
-                  <div className="w-12 h-12 bg-purple-600/10 rounded-2xl flex items-center justify-center text-purple-500 group-hover:bg-purple-600 group-hover:text-white transition-all">
-                    <FaPhoneAlt />
-                  </div>
-                  <div>
-                    <p className="text-xs text-zinc-500 uppercase font-bold tracking-widest">
-                      Téléphone
-                    </p>
-                    <p className="text-sm font-medium">+216 54 686 444</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-6 group">
-                  <div className="w-12 h-12 bg-zinc-800 rounded-2xl flex items-center justify-center text-zinc-400">
+
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-lg bg-[var(--surface-3)] flex items-center justify-center text-[var(--accent)]">
                     <FaMapMarkerAlt />
                   </div>
                   <div>
-                    <p className="text-xs text-zinc-500 uppercase font-bold tracking-widest">
+                    <p className="text-xs text-[var(--ink-muted)] uppercase tracking-widest">
                       Localisation
                     </p>
-                    <p className="text-sm font-medium">Sfax, Tunisie</p>
+                    <p className="font-bold">Sfax, Tunisie</p>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="lg:col-span-8 bg-zinc-900/30 border border-white/10 rounded-[2.5rem] p-8 md:p-12 backdrop-blur-xl relative">
-            {formValid.sended && (
-              <div className="absolute inset-0 bg-[#08080a]/95 z-50 rounded-[2.5rem] flex flex-col items-center justify-center text-center p-8">
-                <div className="w-24 h-24 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center text-5xl mb-6">
-                  <FaCheckCircle />
+          <div className="lg:col-span-7">
+            <div className="bg-[var(--surface)] rounded-3xl p-8 md:p-10 shadow-2xl border border-[var(--line)]">
+              {formValid.sended ? (
+                <div className="text-center py-10">
+                  <div className="w-20 h-20 mx-auto rounded-full bg-green-50 flex items-center justify-center text-green-600 mb-4">
+                    <FaCheckCircle size={28} />
+                  </div>
+                  <h3 className="text-xl font-bold">Message envoyé</h3>
+                  <p className="text-[var(--ink-muted)] mt-2">
+                    Merci — je vous répondrai sous 24h.
+                  </p>
                 </div>
-                <h3 className="text-3xl font-bold mb-2 text-white">
-                  Message Envoyé !
-                </h3>
-                <p className="text-zinc-400">
-                  Merci, je vous répondrai sous 24h.
-                </p>
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-8">
-              <div className="grid md:grid-cols-2 gap-8">
-                <div className="space-y-2">
-                  <label className="text-xs font-mono text-zinc-500 uppercase tracking-widest ml-1">
-                    Nom Complet
-                  </label>
-                  <div className="relative">
+              ) : (
+                <form
+                  onSubmit={handleSubmit}
+                  className="space-y-4"
+                  aria-label="Formulaire de contact premium"
+                >
+                  <div
+                    id="form-errors-live"
+                    aria-live="assertive"
+                    aria-atomic="true"
+                    className="sr-only"
+                  >
+                    {liveMessage}
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="nom"
+                      className="text-xs font-mono text-[var(--ink-muted)]"
+                    >
+                      Nom
+                    </label>
                     <input
-                      type="text"
+                      id="nom"
                       name="nom"
+                      type="text"
                       value={formData.nom}
                       onChange={handleChange}
                       onBlur={() => handleBlur("nom")}
-                      className={`w-full bg-white/5 border-2 rounded-2xl px-6 py-4 outline-none transition-all ${
-                        touched.nom
-                          ? formValid.nom
-                            ? "border-green-500/50 bg-green-500/5"
-                            : "border-red-500/50 bg-red-500/5"
-                          : "border-white/5 focus:border-blue-500/50"
-                      }`}
-                      placeholder="Ex: Jean Dupont"
+                      required
+                      className="mt-2 w-full bg-transparent border border-[var(--line)] rounded-xl px-4 py-3 focus:border-[var(--accent)] outline-none transition-all"
+                      aria-invalid={
+                        (submitAttempted || touched.nom) && !formValid.nom
+                      }
+                      aria-describedby={
+                        !formValid.nom && submitAttempted
+                          ? "nom-error"
+                          : undefined
+                      }
                     />
-                    <FaUser className="absolute right-5 top-5 text-zinc-600" />
+                    {submitAttempted && !formValid.nom && (
+                      <p
+                        id="nom-error"
+                        role="alert"
+                        className="text-sm mt-2 text-[var(--danger)]"
+                      >
+                        Le nom doit contenir au moins 3 caractères.
+                      </p>
+                    )}
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <label className="text-xs font-mono text-zinc-500 uppercase tracking-widest ml-1">
-                    Email
-                  </label>
-                  <div className="relative">
+                  <div>
+                    <label
+                      htmlFor="email"
+                      className="text-xs font-mono text-[var(--ink-muted)]"
+                    >
+                      Email
+                    </label>
                     <input
-                      type="email"
+                      id="email"
                       name="email"
+                      type="email"
                       value={formData.email}
                       onChange={handleChange}
                       onBlur={() => handleBlur("email")}
-                      className={`w-full bg-white/5 border-2 rounded-2xl px-6 py-4 outline-none transition-all ${
-                        touched.email
-                          ? formValid.email
-                            ? "border-green-500/50 bg-green-500/5"
-                            : "border-red-500/50 bg-red-500/5"
-                          : "border-white/5 focus:border-blue-500/50"
-                      }`}
-                      placeholder="nom@exemple.com"
+                      required
+                      className="mt-2 w-full bg-transparent border border-[var(--line)] rounded-xl px-4 py-3 focus:border-[var(--accent)] outline-none transition-all"
+                      aria-invalid={
+                        (submitAttempted || touched.email) && !formValid.email
+                      }
+                      aria-describedby={
+                        !formValid.email && submitAttempted
+                          ? "email-error"
+                          : undefined
+                      }
                     />
-                    <FaEnvelope className="absolute right-5 top-5 text-zinc-600" />
+                    {submitAttempted && !formValid.email && (
+                      <p
+                        id="email-error"
+                        role="alert"
+                        className="text-sm mt-2 text-[var(--danger)]"
+                      >
+                        Entrez une adresse email valide.
+                      </p>
+                    )}
                   </div>
-                </div>
-              </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-mono text-zinc-500 uppercase tracking-widest ml-1">
-                  Votre Projet
-                </label>
-                <div className="relative">
-                  <textarea
-                    name="message"
-                    value={formData.message}
-                    onChange={handleChange}
-                    onBlur={() => handleBlur("message")}
-                    rows="5"
-                    className={`w-full bg-white/5 border-2 rounded-2xl px-6 py-4 outline-none transition-all resize-none ${
-                      touched.message
-                        ? formValid.message
-                          ? "border-green-500/50 bg-green-500/5"
-                          : "border-red-500/50 bg-red-500/5"
-                        : "border-white/5 focus:border-blue-500/50"
-                    }`}
-                    placeholder="Dites-m'en plus sur vos besoins..."
-                  />
-                  <FaCommentDots className="absolute right-5 top-5 text-zinc-600" />
-                </div>
-              </div>
+                  <div>
+                    <label
+                      htmlFor="tel"
+                      className="text-xs font-mono text-[var(--ink-muted)]"
+                    >
+                      Téléphone
+                    </label>
+                    <input
+                      id="tel"
+                      name="tel"
+                      type="tel"
+                      value={formData.tel}
+                      onChange={handleChange}
+                      className="mt-2 w-full bg-transparent border border-[var(--line)] rounded-xl px-4 py-3 focus:border-[var(--accent)] outline-none transition-all"
+                    />
+                  </div>
 
-              <div className="flex flex-col md:flex-row items-center justify-between gap-6 pt-4">
-                <div className="flex items-center gap-4">
-                  <span className="text-sm text-zinc-500 font-mono">
-                    Priorité :
-                  </span>
-                  <select
-                    name="priorité"
-                    value={formData.priorité}
-                    onChange={handleChange}
-                    className="bg-[#121214] border border-white/10 rounded-xl px-4 py-2 text-sm outline-none cursor-pointer hover:border-blue-500/50 transition-colors"
-                  >
-                    <option value="moyenne">Normal</option>
-                    <option value="haute">Urgent ⚡</option>
-                    <option value="basse">Plus tard</option>
-                  </select>
-                </div>
+                  <div>
+                    <label
+                      htmlFor="sujet"
+                      className="text-xs font-mono text-[var(--ink-muted)]"
+                    >
+                      Sujet
+                    </label>
+                    <input
+                      id="sujet"
+                      name="sujet"
+                      type="text"
+                      value={formData.sujet || ""}
+                      onChange={(e) =>
+                        setFormData({ ...formData, sujet: e.target.value })
+                      }
+                      className="mt-2 w-full bg-transparent border border-[var(--line)] rounded-xl px-4 py-3 focus:border-[var(--accent)] outline-none transition-all"
+                    />
+                  </div>
 
-                <button
-                  type="submit"
-                  disabled={!formValid.send || formValid.sending}
-                  className={`relative px-12 py-4 rounded-full font-bold transition-all duration-300 ${
-                    formValid.send && !formValid.sending
-                      ? "bg-white text-black shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:scale-105"
-                      : "bg-zinc-800 text-zinc-500 cursor-not-allowed"
-                  }`}
-                >
-                  <span className="relative z-10 flex items-center gap-3">
-                    {formValid.sending
-                      ? "Envoi en cours..."
-                      : "Envoyer le message"}
-                    {!formValid.sending && <FaPaperPlane className="text-xs" />}
-                  </span>
-                </button>
-              </div>
-            </form>
+                  <div>
+                    <label
+                      htmlFor="message"
+                      className="text-xs font-mono text-[var(--ink-muted)]"
+                    >
+                      Message
+                    </label>
+                    <textarea
+                      id="message"
+                      name="message"
+                      rows="5"
+                      value={formData.message}
+                      onChange={handleChange}
+                      onBlur={() => handleBlur("message")}
+                      required
+                      className="mt-2 w-full bg-transparent border border-[var(--line)] rounded-xl px-4 py-3 focus:border-[var(--accent)] outline-none transition-all resize-none"
+                      aria-invalid={
+                        (submitAttempted || touched.message) &&
+                        !formValid.message
+                      }
+                      aria-describedby={
+                        !formValid.message && submitAttempted
+                          ? "message-error"
+                          : undefined
+                      }
+                    ></textarea>
+                    {submitAttempted && !formValid.message && (
+                      <p
+                        id="message-error"
+                        role="alert"
+                        className="text-sm mt-2 text-[var(--danger)]"
+                      >
+                        Le message doit contenir au moins 10 caractères.
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between gap-4 pt-4">
+                    <button
+                      type="submit"
+                      disabled={!formValid.send || formValid.sending}
+                      className={`flex-1 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-[var(--accent)] to-[var(--accent-2)] hover:scale-[1.01] active:scale-[0.99] transition-transform ${formValid.send ? "" : "opacity-60 cursor-not-allowed"}`}
+                    >
+                      {formValid.sending ? "Envoi..." : "Envoyer le message"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormData({
+                          nom: "",
+                          email: "",
+                          tel: "",
+                          message: "",
+                          priorité: "moyenne",
+                          sujet: "",
+                        });
+                        setTouched({
+                          nom: false,
+                          email: false,
+                          message: false,
+                        });
+                        setSubmitAttempted(false);
+                      }}
+                      className="px-4 py-3 rounded-xl bg-[var(--surface-3)] border border-[var(--line)]"
+                    >
+                      Effacer
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
           </div>
         </div>
       </div>

@@ -1,216 +1,219 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
-  FaBriefcase,
   FaCalendar,
-  FaMapMarkerAlt,
   FaAward,
   FaExternalLinkAlt,
   FaRobot,
   FaServer,
-  FaLayerGroup,
 } from "react-icons/fa";
 
 const Experience = () => {
   const user = {
-    experience: "2 ans",
-    availability: "Disponible immédiatement",
-    bio: "Expert Full-Stack spécialisé dans l'ingénierie de données et les architectures microservices. Je transforme des problématiques complexes en interfaces fluides et backends robustes.",
+    experience: "",
+    availability: "",
+    bio: "Développeur full-stack spécialisé dans les architectures microservices et l'intégration de modèles IA.",
+
+    stack: [
+      "Python / Flask",
+      "React / Vue.js",
+      "Playwright / Selenium",
+      "Microservices",
+    ],
 
     experiences: [
       {
         id: 1,
-        period: "Janv 2025 - Avr 2025",
+        period: "Janvier — Avril 2025",
         role: "Développeur Web Full-Stack",
         company: "Linio.io (USA)",
         location: "Remote",
-        type: "Stage International",
-        icon: <FaRobot className="text-cyan-400" />,
-        color: "from-cyan-500/20 to-blue-500/20",
+        type: "Mission",
+        icon: <FaRobot />,
         description:
-          "Ingénierie de solutions d'automatisation à grande échelle et développement d'interfaces réactives.",
+          "Développement d'applications web avec React et Flask. Travaux de web scraping (Selenium, Playwright), conception d'API REST, et optimisation des applications.",
         achievements: [
-          "Architecture React & Flask haute performance",
-          "Pipelines de scraping (Selenium/Playwright)",
-          "Optimisation des performances de 40%",
+          "Développement d'applications React & Flask",
+          "Web scraping avec Selenium et Playwright",
+          "Conception d'API REST et tests",
         ],
-        technologies: ["React", "Flask", "Selenium", "Playwright"],
+        technologies: ["React", "Flask", "Selenium", "Playwright", "Figma"],
       },
       {
         id: 2,
-        period: "Juil 2025 - Août 2025",
-        role: "Full-Stack Engineer",
-        company: "Bacab Consulting",
+        period: "Mars — Juillet 2026",
+        role: "Développeur Full-Stack & IA",
+        company: "BACAB Consulting",
         location: "Tunisie",
-        type: "Stage",
-        icon: <FaServer className="text-purple-400" />,
-        color: "from-purple-500/20 to-pink-500/20",
+        type: "Projet de fin d'études",
+        icon: <FaServer />,
         description:
-          "Conception d'un écosystème de gestion de stock basé sur une architecture microservices.",
+          "Développement d'une plateforme Smart City de gestion des incidents urbains, intégrant classification assistée par IA et tableaux de bord.",
         achievements: [
-          "Orchestration de microservices Flask",
-          "Déploiement avec Docker & MySQL",
-          "Interface Vue.js ultra-rapide",
+          "Conception d'une architecture microservices (React, Flask)",
+          "Intégration d'un modèle YOLOv8 pour classification automatique",
+          "Mise en place d'authentification JWT et notifications e-mail",
         ],
-        technologies: ["Flask", "Vue.js", "MySQL", "Docker"],
+        technologies: ["React", "Flask", "YOLOv8", "REST API", "JWT"],
       },
     ],
 
     certifications: [
       {
         name: "Meilleur Projet Innovant",
-        organization: "Projects Valley – IIT",
+        organization: "IIT",
         date: "2024",
         url: "#",
       },
     ],
   };
 
+  useEffect(() => {
+    const items = document.querySelectorAll(".timeline-item");
+    if (!items || items.length === 0) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            e.target.classList.add("visible");
+            io.unobserve(e.target);
+          }
+        });
+      },
+      { threshold: 0.2 },
+    );
+    items.forEach((i) => io.observe(i));
+    return () => io.disconnect();
+  }, []);
+
   return (
-    <section className="min-h-screen bg-[#050505] text-white py-24 relative overflow-hidden">
-      {/* --- Effets de fond (Ambient Light) --- */}
-      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px] -z-0"></div>
-      <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[120px] -z-0"></div>
-
-      <div className="max-w-7xl mx-auto px-6 relative z-10">
-        {/* --- HEADER STYLE "MAGAZINE" --- */}
-        <div className="flex flex-col mb-20">
-          <div className="flex items-center gap-3 mb-4">
-            <span className="h-[2px] w-10 bg-blue-500"></span>
-            <span className="text-blue-500 font-mono tracking-widest uppercase text-sm">
-              Mon Parcours
-            </span>
-          </div>
-          <h2 className="text-6xl md:text-8xl font-black italic tracking-tighter leading-none">
-            EXPERIENCE <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-zinc-100 to-zinc-500">
-              & EVOLUTION.
-            </span>
+    <section className="min-h-screen bg-[var(--bg)] text-[var(--ink)] py-24 relative overflow-hidden">
+      <div className="max-w-6xl mx-auto px-6 relative z-10">
+        {/* HEADER */}
+        <div className="flex flex-col mb-20 border-b border-[var(--line)] pb-16">
+          <span className="font-mono text-[11px] tracking-widest text-[var(--accent)] mb-4">
+            MON PARCOURS
+          </span>
+          <h2 className="font-display text-5xl md:text-7xl font-semibold tracking-tight leading-[1.05] mb-10">
+            Expérience & évolution.
           </h2>
-        </div>
 
-        {/* --- BENTO GRID LAYOUT --- */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-          {/* Bloc Bio & Stats */}
-          <div className="md:col-span-8 bg-zinc-900/30 border border-white/10 p-10 rounded-[2.5rem] backdrop-blur-xl flex flex-col justify-between">
-            <p className="text-2xl md:text-3xl font-light leading-relaxed text-zinc-300 italic">
+          <div className="grid md:grid-cols-2 gap-10">
+            <p className="text-xl md:text-2xl font-light leading-relaxed text-[var(--ink-muted)]">
               "{user.bio}"
             </p>
-            <div className="flex items-center gap-6 mt-12 pt-8 border-t border-white/5">
+            <div className="flex flex-wrap items-start gap-x-10 gap-y-6">
               <div>
-                <p className="text-4xl font-black text-blue-500">
+                <p className="font-display text-4xl font-semibold text-[var(--accent)]">
                   {user.experience}
                 </p>
-                <p className="text-xs uppercase tracking-widest text-zinc-500">
-                  Expertise
+                <p className="font-mono text-[10px] tracking-widest text-[var(--ink-muted)] mt-1">
+                  EXPERTISE
                 </p>
               </div>
-              <div className="h-10 w-[1px] bg-white/10"></div>
               <div>
-                <p className="text-sm font-bold text-green-400 uppercase tracking-tighter">
+                <p className="font-display text-base font-medium text-[var(--accent-2)]">
                   {user.availability}
                 </p>
-                <p className="text-xs uppercase tracking-widest text-zinc-500">
-                  Statut actuel
+                <p className="font-mono text-[10px] tracking-widest text-[var(--ink-muted)] mt-1">
+                  STATUT ACTUEL
                 </p>
               </div>
-            </div>
-          </div>
-
-          {/* Bloc Stack Principal (Visuel) */}
-          <div className="md:col-span-4 bg-blue-600 rounded-[2.5rem] p-10 flex flex-col justify-between group overflow-hidden relative">
-            <FaLayerGroup className="text-8xl absolute -right-5 -top-5 opacity-20 rotate-12 group-hover:rotate-0 transition-transform duration-500" />
-            <h4 className="text-2xl font-bold relative z-10">
-              Stack <br />
-              Maîtrisé
-            </h4>
-            <div className="space-y-2 relative z-10">
-              {[
-                "Python / Flask",
-                "React / Vue",
-                "Scraping Expert",
-                "Microservices",
-              ].map((s) => (
-                <div
-                  key={s}
-                  className="text-sm font-medium py-1 px-3 bg-white/20 rounded-lg w-fit"
-                >
-                  {s}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* --- LES CARTES D'EXPÉRIENCE --- */}
-          {user.experiences.map((exp) => (
-            <div
-              key={exp.id}
-              className="md:col-span-6 bg-zinc-900/50 border border-white/5 p-8 rounded-[2.5rem] hover:border-blue-500/50 transition-all duration-500 group"
-            >
-              <div className="flex justify-between items-start mb-8">
-                <div
-                  className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${exp.color} flex items-center justify-center text-3xl shadow-lg`}
-                >
-                  {exp.icon}
-                </div>
-                <div className="text-right">
-                  <div className="flex items-center gap-2 text-zinc-400 font-mono text-sm justify-end">
-                    <FaCalendar className="text-xs" /> {exp.period}
-                  </div>
-                  <span className="text-[10px] text-blue-400 font-black uppercase tracking-widest">
-                    {exp.type}
-                  </span>
-                </div>
-              </div>
-
-              <h4 className="text-3xl font-bold mb-1 group-hover:text-blue-400 transition-colors">
-                {exp.role}
-              </h4>
-              <p className="text-zinc-500 font-medium mb-6 flex items-center gap-2">
-                {exp.company} • {exp.location}
-              </p>
-
-              <div className="space-y-4 mb-8">
-                {exp.achievements.map((a, i) => (
-                  <div key={i} className="flex items-start gap-3">
-                    <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-blue-500"></div>
-                    <p className="text-sm text-zinc-300 leading-snug">{a}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex flex-wrap gap-2 pt-4 border-t border-white/5">
-                {exp.technologies.map((t) => (
+              <div className="flex flex-wrap gap-2 max-w-xs">
+                {user.stack.map((s) => (
                   <span
-                    key={t}
-                    className="text-[10px] font-bold px-2 py-1 bg-white/5 rounded text-zinc-400 uppercase tracking-tighter"
+                    key={s}
+                    className="font-mono text-[10px] px-2 py-1 border border-[var(--line-strong)]"
                   >
-                    {t}
+                    {s}
                   </span>
                 ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* TIMELINE */}
+        <div className="timeline pl-10 md:pl-16">
+          {user.experiences.map((exp) => (
+            <div key={exp.id} className="timeline-item">
+              <div className="timeline-point" />
+
+              <div className="mb-4 font-mono text-xs text-[var(--ink-muted)] tracking-wide">
+                <FaCalendar className="text-[var(--accent)] inline mr-2" />{" "}
+                {exp.period}{" "}
+                <span className="text-[var(--line-strong)] mx-2">/</span>{" "}
+                {exp.type}
+              </div>
+
+              <div className="border border-[var(--line)] bg-[var(--surface)] p-6 hover:border-[var(--accent)] transition-colors">
+                <div className="flex items-start justify-between gap-4 mb-4">
+                  <div>
+                    <h4 className="font-display text-xl md:text-2xl font-semibold">
+                      {exp.role}
+                    </h4>
+                    <p className="text-[var(--ink-muted)] mt-1">
+                      {exp.company} — {exp.location}
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 shrink-0 border border-[var(--line-strong)] flex items-center justify-center text-[var(--accent)] text-xl">
+                    {exp.icon}
+                  </div>
+                </div>
+
+                <p className="text-[var(--ink-muted)] mb-4">
+                  {exp.description}
+                </p>
+
+                <div className="space-y-3 mb-4">
+                  {exp.achievements.map((a, i) => (
+                    <div key={i} className="flex items-start gap-3">
+                      <div className="mt-1.5 h-1.5 w-1.5 bg-[var(--accent)] shrink-0" />
+                      <p className="text-sm text-[var(--ink)] leading-snug">
+                        {a}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex flex-wrap gap-2 pt-2 border-t border-[var(--line)]">
+                  {exp.technologies.map((t) => (
+                    <span
+                      key={t}
+                      className="font-mono text-[10px] px-2 py-1 border border-[var(--line)] text-[var(--ink-muted)]"
+                    >
+                      {t}
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
           ))}
+        </div>
 
-          {/* --- SECTION RECONNAISSANCE (LIGNE FINALE) --- */}
-          <div className="md:col-span-12 bg-gradient-to-r from-zinc-900 to-transparent border border-white/5 p-8 rounded-[2.5rem] flex flex-col md:flex-row items-center justify-between gap-6 group">
-            <div className="flex items-center gap-6">
-              <div className="w-16 h-16 rounded-full bg-yellow-500/10 flex items-center justify-center text-yellow-500 text-3xl animate-pulse">
-                <FaAward />
-              </div>
-              <div>
-                <h4 className="text-2xl font-bold tracking-tight">
-                  Projet Innovant de l'Année
-                </h4>
-                <p className="text-zinc-500">IIT - Projects Valley • 2024</p>
-              </div>
+        {/* Reveal timeline points with IntersectionObserver (handled by hook) */}
+
+        {/* RECOGNITION */}
+        <div className="mt-4 border border-[var(--line-strong)] bg-[var(--surface)] p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-6">
+            <div className="w-14 h-14 border border-[var(--accent)] flex items-center justify-center text-[var(--accent)] text-2xl">
+              <FaAward />
             </div>
-            <a
-              href={user.certifications[0].url}
-              className="px-8 py-4 bg-white text-black rounded-full font-bold flex items-center gap-2 hover:bg-blue-500 hover:text-white transition-all shadow-xl active:scale-95"
-            >
-              VOIR LE CERTIFICAT <FaExternalLinkAlt className="text-xs" />
-            </a>
+            <div>
+              <h4 className="font-display text-xl font-semibold">
+                Projet innovant de l'année
+              </h4>
+              <p className="text-[var(--ink-muted)] text-sm">
+                {user.certifications[0].organization} ·{" "}
+                {user.certifications[0].date}
+              </p>
+            </div>
           </div>
+          <a
+            href={user.certifications[0].url}
+            className="px-6 py-3 border border-[var(--line-strong)] font-mono text-xs tracking-widest hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors flex items-center gap-2"
+          >
+            VOIR LE CERTIFICAT <FaExternalLinkAlt className="text-[10px]" />
+          </a>
         </div>
       </div>
     </section>
