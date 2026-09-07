@@ -7,8 +7,11 @@ import {
   FaServer,
   FaBoxes,
 } from "react-icons/fa";
+import useReveal from "../../hooks/useReveal";
 
 const Experience = () => {
+  const rootRef = useReveal();
+
   const user = {
     experience: "1+ an",
     availability: "Disponible pour opportunités",
@@ -108,15 +111,19 @@ const Experience = () => {
   }, []);
 
   return (
-    <section className="min-h-screen bg-[var(--bg)] text-[var(--ink)] py-24 relative overflow-hidden">
+    <section
+      ref={rootRef}
+      className="min-h-screen bg-[var(--bg)] text-[var(--ink)] py-28 relative overflow-hidden"
+    >
       <div className="max-w-6xl mx-auto px-6 relative z-10">
         {/* HEADER */}
-        <div className="flex flex-col mb-20 border-b border-[var(--line)] pb-16">
-          <span className="font-mono text-[11px] tracking-widest text-[var(--accent)] mb-4">
-            MON PARCOURS
-          </span>
-          <h2 className="font-display text-5xl md:text-7xl font-semibold tracking-tight leading-[1.05] mb-10">
-            Expérience & évolution.
+        <div
+          className="flex flex-col mb-24 border-b border-[var(--line)] pb-16"
+          data-reveal="up"
+        >
+          <p className="eyebrow mb-4">MON PARCOURS</p>
+          <h2 className="display-lg mb-10">
+            Expérience & <span className="text-gradient-gold">évolution</span>.
           </h2>
 
           <div className="grid md:grid-cols-2 gap-10">
@@ -157,7 +164,11 @@ const Experience = () => {
         {/* TIMELINE */}
         <div className="timeline pl-10 md:pl-16">
           {user.experiences.map((exp) => (
-            <div key={exp.id} className="timeline-item">
+            <div
+              key={exp.id}
+              className="timeline-item"
+              data-reveal="left"
+            >
               <div className="timeline-point" />
 
               <div className="mb-4 font-mono text-xs text-[var(--ink-muted)] tracking-wide">
@@ -167,7 +178,7 @@ const Experience = () => {
                 {exp.type}
               </div>
 
-              <div className="border border-[var(--line)] bg-[var(--surface)] p-6 hover:border-[var(--accent)] transition-colors">
+              <div className="border border-[var(--line)] bg-[var(--surface)] p-6 md:p-7 hover:border-[var(--accent)] hover:shadow-[var(--card-glow)] transition-all duration-300">
                 <div className="flex items-start justify-between gap-4 mb-4">
                   <div>
                     <h4 className="font-display text-xl md:text-2xl font-semibold">
@@ -213,7 +224,10 @@ const Experience = () => {
         </div>
 
         {/* RECOGNITION */}
-        <div className="mt-4 border border-[var(--line-strong)] bg-[var(--surface)] p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div
+          className="mt-4 border border-[var(--line-strong)] bg-[var(--surface)] p-8 flex flex-col md:flex-row items-center justify-between gap-6"
+          data-reveal="zoom"
+        >
           <div className="flex items-center gap-6">
             <div className="w-14 h-14 border border-[var(--accent)] flex items-center justify-center text-[var(--accent)] text-2xl">
               <FaAward />

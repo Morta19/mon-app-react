@@ -10,11 +10,14 @@ import {
   FaMapMarkerAlt,
 } from "react-icons/fa";
 import { sendEmail } from "../../emailService";
+import useReveal from "../../hooks/useReveal";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 const FORM_SUBMISSIONS_URL = `${API_URL}/formSubmissions`;
 
 const ContactForm = () => {
+  const rootRef = useReveal();
+
   const [formValid, setFormValid] = useState({
     nom: false,
     email: false,
@@ -166,74 +169,75 @@ const ContactForm = () => {
   const liveMessage = liveErrors.join(" ");
 
   return (
-    <section className="bg-[var(--bg)] text-[var(--ink)] py-20 relative overflow-hidden">
+    <section
+      ref={rootRef}
+      className="bg-[var(--bg)] text-[var(--ink)] py-24 relative overflow-hidden"
+    >
       <div className="absolute -left-24 top-8 w-[420px] h-[420px] bg-gradient-to-br from-[rgba(11,109,240,0.06)] to-transparent rounded-full blur-3xl pointer-events-none"></div>
       <div className="absolute right-0 bottom-[-60px] w-[360px] h-[360px] bg-gradient-to-tr from-[rgba(6,182,212,0.04)] to-transparent rounded-full blur-3xl pointer-events-none"></div>
 
       <div className="max-w-6xl mx-auto px-6 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          <div className="lg:col-span-5">
+          <div className="lg:col-span-5" data-reveal="left">
             <div className="bg-[var(--surface)] border border-[var(--line)] rounded-3xl p-8 shadow-2xl">
-              <h2 className="text-sm font-mono text-[var(--accent)] uppercase tracking-widest mb-2">
-                Contact
-              </h2>
-              <h3 className="text-2xl font-display font-extrabold mb-4">
-                Mortadha Hassen MASMOUDI
-              </h3>
-              <p className="text-[var(--ink-muted)] mb-6">
+              <p className="eyebrow mb-3">Contact</p>
+              <h3 className="display-sm mb-4">Mortadha Hassen MASMOUDI</h3>
+              <p className="text-[var(--ink-muted)] mb-8">
                 Développeur full-stack
               </p>
 
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-lg bg-[var(--surface-3)] flex items-center justify-center text-[var(--accent)]">
+                  <div className="icon-tile">
                     <FaPhoneAlt />
                   </div>
                   <div>
-                    <p className="text-xs text-[var(--ink-muted)] uppercase tracking-widest">
+                    <p className="text-xs text-[var(--ink-muted)] uppercase tracking-widest mb-1">
                       Téléphone
                     </p>
-                    <p className="font-bold">+216 54 686 444</p>
+                    <p className="font-semibold tracking-tight">
+                      +216 54 686 444
+                    </p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-lg bg-[var(--surface-3)] flex items-center justify-center text-[var(--accent)]">
+                  <div className="icon-tile">
                     <FaEnvelope />
                   </div>
                   <div>
-                    <p className="text-xs text-[var(--ink-muted)] uppercase tracking-widest">
+                    <p className="text-xs text-[var(--ink-muted)] uppercase tracking-widest mb-1">
                       Email
                     </p>
-                    <p className="font-bold break-all">
+                    <p className="font-semibold break-all tracking-tight">
                       mortadhahassenmasmoudi@gmail.com
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-lg bg-[var(--surface-3)] flex items-center justify-center text-[var(--accent)]">
+                  <div className="icon-tile">
                     <FaMapMarkerAlt />
                   </div>
                   <div>
-                    <p className="text-xs text-[var(--ink-muted)] uppercase tracking-widest">
+                    <p className="text-xs text-[var(--ink-muted)] uppercase tracking-widest mb-1">
                       Localisation
                     </p>
-                    <p className="font-bold">Sfax, Tunisie</p>
+                    <p className="font-semibold tracking-tight">Sfax, Tunisie</p>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="lg:col-span-7">
+          <div className="lg:col-span-7" data-reveal="right">
             <div className="bg-[var(--surface)] rounded-3xl p-8 md:p-10 shadow-2xl border border-[var(--line)]">
               {formValid.sended ? (
-                <div className="text-center py-10">
-                  <div className="w-20 h-20 mx-auto rounded-full bg-green-50 flex items-center justify-center text-green-600 mb-4">
+                <div className="text-center py-10 success-pop">
+                  <div className="w-20 h-20 mx-auto rounded-full bg-[var(--success-soft)] flex items-center justify-center text-[var(--success)] mb-5">
                     <FaCheckCircle size={28} />
                   </div>
-                  <h3 className="text-xl font-bold">Message envoyé</h3>
+                  <h3 className="display-sm">Message envoyé</h3>
                   <p className="text-[var(--ink-muted)] mt-2">
                     Merci — je vous répondrai sous 24h.
                   </p>

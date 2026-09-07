@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FaRocket, FaTimes } from "react-icons/fa";
 import localData from "../../db.json";
+import useReveal from "../hooks/useReveal";
+import useTilt from "../hooks/useTilt";
 
 const API_BASE = import.meta.env.VITE_PROJECTS_API_URL;
 
@@ -129,11 +131,13 @@ function LoadingState() {
 
 function PageHeader() {
   return (
-    <header className="mb-16 max-w-2xl">
-      <h1 className="text-4xl font-bold tracking-tight text-[var(--ink)] sm:text-5xl md:text-6xl">
-        Projets
+    <header className="mb-16 max-w-2xl" data-reveal="up">
+      <p className="eyebrow mb-4">TRAVAUX SÉLECTIONNÉS</p>
+      <h1 className="display-lg mb-6">
+        Projets <span className="text-gradient-gold">concrets</span>.
       </h1>
-      <p className="mt-4 text-base leading-relaxed text-[var(--ink-muted)] sm:text-lg">
+      <hr className="section-rule w-40 mb-6" />
+      <p className="text-base leading-relaxed text-[var(--ink-muted)] sm:text-lg">
         Une sélection d'applications conçues et développées de bout en bout,
         du prototype à la mise en production.
       </p>
@@ -284,6 +288,7 @@ function FeaturedProject({ project, onShowDetails }) {
 function ProjectCard({ project, index, onSelect }) {
   const techArray = toTechArray(project.techStack);
   const cover = project.image || project.images?.[0] || "";
+  const tilt = useTilt(6);
 
   function selectProject() {
     onSelect(project);
@@ -291,6 +296,9 @@ function ProjectCard({ project, index, onSelect }) {
 
   return (
     <article
+      ref={tilt.ref}
+      onMouseMove={tilt.onMouseMove}
+      onMouseLeave={tilt.onMouseLeave}
       onClick={selectProject}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
@@ -300,25 +308,31 @@ function ProjectCard({ project, index, onSelect }) {
       }}
       role="button"
       tabIndex={0}
-      className="group flex flex-col overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface)] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] hover:border-[var(--line-strong)]"
+      data-reveal="up"
+      style={{ "--reveal-delay": `${(index % 3) * 90}ms` }}
+      className="tilt-card group flex flex-col overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface)] cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
     >
       <div className="relative aspect-[16/10] overflow-hidden bg-[var(--surface-3)]">
         {cover ? (
           <img
             src={cover}
             alt={project.title}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+            loading="lazy"
+            decoding="async"
+            className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.05]"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-[var(--line-strong)]">
+          <div className="flex h-full w-full items-center justify-center text-[var(--line-strong)] transition-colors duration-300 group-hover:text-[var(--accent)]">
             <FaRocket size={26} />
           </div>
         )}
+        {/* Voile dégradé au survol */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[rgba(5,7,13,0.35)] to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
       </div>
 
       <div className="flex flex-1 flex-col gap-4 p-6">
         <div className="flex items-start justify-between gap-3">
-          <h2 className="text-lg font-semibold text-[var(--ink)]">
+          <h2 className="font-display text-lg font-semibold tracking-tight text-[var(--ink)] transition-colors duration-300 group-hover:text-[var(--accent)]">
             {project.title}
           </h2>
           <StatusBadge status={project.status} />
@@ -332,7 +346,7 @@ function ProjectCard({ project, index, onSelect }) {
           {techArray.slice(0, 4).map((tech, techIndex) => (
             <span
               key={tech}
-              className="rounded-full border px-2.5 py-1 text-[11px] font-medium"
+              className="rounded-full border px-2.5 py-1 text-[11px] font-medium transition-transform duration-200 group-hover:-translate-y-0.5"
               style={{
                 borderColor: accentFor(techIndex),
                 color: accentFor(techIndex),
@@ -486,7 +500,7 @@ const ProjectsList = () => {
   const [selectedProject, setSelectedProject] = useState(null);
   const [featured, setFeatured] = useState(null);
 
-  const mainRef = useRef(null);
+  const mainRef = useReveal();
 
   useEffect(() => {
     async function loadProjects() {

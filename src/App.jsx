@@ -5,7 +5,7 @@ import { ThemeProvider } from "./context/ThemeContext.jsx";
 
 // Public Pages
 import Layout from "./Pages/Layout.jsx";
-import Hero from "./components/Accueil/Hero.jsx";
+import Accueil from "./components/Accueil/Accueil.jsx";
 import About from "./components/Accueil/About.jsx";
 import Experience from "./components/Accueil/Experience.jsx";
 import ContactForm from "./components/Formulaire/FormulaireG6.jsx";
@@ -28,20 +28,15 @@ import AdminProjects from "./admin/projects.jsx";
 
 function NotFound() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[var(--bg)] text-[var(--ink)] font-sans px-6 text-center">
-      <p className="font-mono text-xs tracking-widest text-[var(--accent)] mb-4">
-        ERREUR 404
-      </p>
-      <h1 className="font-display text-7xl md:text-9xl font-bold text-[var(--ink)]">
-        404
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[var(--bg)] bg-grid text-[var(--ink)] font-sans px-6 text-center">
+      <p className="eyebrow mb-5">ERREUR 404</p>
+      <h1 className="display-xl mb-4">
+        4<span className="text-gradient-gold">0</span>4
       </h1>
-      <p className="text-[var(--ink-muted)] mb-10 mt-2">
+      <p className="text-[var(--ink-muted)] mb-10 max-w-sm">
         Cette page n'existe pas ou a été déplacée.
       </p>
-      <a
-        href="/"
-        className="border border-[var(--line-strong)] px-8 py-4 font-mono text-xs tracking-widest hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
-      >
+      <a href="/" className="btn-ghost font-mono text-xs tracking-widest px-8 py-4">
         RETOUR AU SITE
       </a>
     </div>
@@ -59,7 +54,7 @@ function App() {
       <Routes>
         {/* --- PAGES PUBLIQUES --- */}
         <Route path="/" element={<Layout />}>
-          <Route index element={<Hero />} />
+          <Route index element={<Accueil />} />
           <Route path="about" element={<About />} />
           <Route path="skills" element={<Skills />} />
           <Route path="projets" element={<Experience />} />

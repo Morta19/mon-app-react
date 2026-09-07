@@ -10,9 +10,11 @@ import {
   FaGraduationCap,
 } from "react-icons/fa";
 import mortaImg from "../../assets/morta.jpg";
+import useReveal from "../../hooks/useReveal";
 
 const About = () => {
   const navigate = useNavigate();
+  const rootRef = useReveal();
 
   const user = {
     name: "Mortadha Hassen MASMOUDI",
@@ -55,42 +57,45 @@ const About = () => {
   };
 
   return (
-    <section className="bg-[var(--bg)] text-[var(--ink)] py-24 relative overflow-hidden">
+    <section
+      ref={rootRef}
+      className="bg-[var(--bg)] text-[var(--ink)] py-28 relative overflow-hidden"
+    >
       <div className="max-w-7xl mx-auto px-6 relative z-10">
         {/* HEADER */}
-        <div className="grid lg:grid-cols-2 gap-16 items-center mb-20 pb-10 border-b border-[var(--line)]">
-          <div className="space-y-6">
-            <span className="font-mono text-[11px] tracking-widest text-[var(--accent)]">
-              {user.tagline.toUpperCase()}
-            </span>
-            <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight leading-[1.05]">
-              Profil & formation
+        <div className="grid lg:grid-cols-2 gap-16 items-center mb-24 pb-14 border-b border-[var(--line)]">
+          <div className="space-y-6" data-reveal="up">
+            <p className="eyebrow">{user.tagline.toUpperCase()}</p>
+            <h2 className="display-lg">
+              Profil &amp;{" "}
+              <span className="text-gradient-gold">formation</span>
             </h2>
+            <hr className="section-rule w-40" />
             <p className="text-lg text-[var(--ink-muted)] leading-relaxed max-w-xl">
               {user.mainDescription}
             </p>
 
             <div className="mt-6 grid sm:grid-cols-2 gap-6">
-              <div className="card p-6">
-                <p className="font-mono text-xs text-[var(--ink-muted)] tracking-widest">
-                  Diplôme
-                </p>
-                <h3 className="font-display text-lg font-semibold mt-2">
+              <div className="card p-6" data-reveal="up">
+                <p className="eyebrow mb-3">Diplôme</p>
+                <h3 className="font-display text-lg font-semibold tracking-tight mt-2">
                   Licence en Génie Logiciel et Systèmes d'Information
                 </h3>
                 <p className="text-[var(--ink-muted)] text-sm mt-1">
                   Institut International de Technologie — 2026
                 </p>
-                <p className="text-[var(--ink-muted)] text-xs mt-3">
+                <p className="text-[var(--success)] text-xs mt-3 font-semibold">
                   Mention très bien
                 </p>
               </div>
 
-              <div className="card p-6">
-                <p className="font-mono text-xs text-[var(--ink-muted)] tracking-widest">
-                  Baccalauréat
-                </p>
-                <h3 className="font-display text-lg font-semibold mt-2">
+              <div
+                className="card p-6"
+                data-reveal="up"
+                style={{ "--reveal-delay": "120ms" }}
+              >
+                <p className="eyebrow mb-3">Baccalauréat</p>
+                <h3 className="font-display text-lg font-semibold tracking-tight mt-2">
                   Baccalauréat Mathématiques
                 </h3>
                 <p className="text-[var(--ink-muted)] text-sm mt-1">
@@ -100,19 +105,24 @@ const About = () => {
             </div>
           </div>
 
-          <div className="justify-self-center lg:justify-self-end">
+          <div
+            className="justify-self-center lg:justify-self-end"
+            data-reveal="zoom"
+          >
             <div className="corner-frame w-56 h-[360px] sm:w-72 sm:h-[420px] md:w-80 md:h-[480px] border border-[var(--line-strong)] bg-[var(--surface)] p-3">
               <div className="relative w-full h-full overflow-hidden">
                 <img
                   src={user.image}
                   alt={user.name}
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700"
                 />
-                <div className="absolute bottom-0 inset-x-0 p-6 bg-gradient-to-t from-[rgba(255,255,255,0.02)] to-transparent">
-                  <p className="font-display font-semibold text-lg">
+                <div className="absolute bottom-0 inset-x-0 p-6 bg-gradient-to-t from-[rgba(5,7,13,0.75)] via-[rgba(5,7,13,0.3)] to-transparent">
+                  <p className="font-display font-semibold text-lg text-white">
                     {user.name}
                   </p>
-                  <p className="font-mono text-[10px] text-[var(--accent)] tracking-widest">
+                  <p className="font-mono text-[10px] text-[var(--accent-3)] tracking-widest">
                     {user.tagline}
                   </p>
                 </div>
@@ -126,12 +136,14 @@ const About = () => {
           {user.features.map((f, i) => (
             <div
               key={i}
-              className="bg-[var(--bg)] p-8 hover:bg-[var(--surface)] transition-colors group"
+              data-reveal="up"
+              style={{ "--reveal-delay": `${i * 80}ms` }}
+              className="bg-[var(--bg)] p-8 hover:bg-[var(--surface)] transition-colors duration-300 group"
             >
-              <div className="w-10 h-10 flex items-center justify-center text-[var(--accent)] mb-6 border border-[var(--line-strong)]">
+              <div className="icon-tile mb-6" aria-hidden="true">
                 {f.icon}
               </div>
-              <h4 className="font-display font-semibold text-lg mb-2">
+              <h4 className="font-display font-semibold text-lg mb-2 tracking-tight">
                 {f.title}
               </h4>
               <p className="text-[var(--ink-muted)] text-sm leading-relaxed">
