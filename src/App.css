@@ -137,7 +137,7 @@ body {
 }
 
 /* Floating tech badges used in Hero */
-.floating-tech { position: absolute; padding: 8px 12px; border-radius: 12px; backdrop-filter: blur(6px) saturate(120%); border: 1px solid var(--glass-border); background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02)); color: var(--ink); transform: translate3d(var(--tx,0),var(--ty,0),0) scale(var(--s,1)); transition: transform 300ms cubic-bezier(.2,.9,.3,1), opacity 300ms; }
+.floating-tech { position: absolute; padding: 8px 12px; border-radius: 12px;  border: 1px solid var(--glass-border); background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02)); color: var(--ink); transform: translate3d(var(--tx,0),var(--ty,0),0) scale(var(--s,1)); transition: transform 300ms cubic-bezier(.2,.9,.3,1), opacity 300ms; }
 
 /* Modal */
 .modal-backdrop { position: fixed; inset:0; background: rgba(2,6,23,0.6); display:flex; align-items:center; justify-content:center; z-index:60; }
@@ -212,7 +212,7 @@ body {
 /* Navbar glass and controls */
 .nav-glass {
   background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.35));
-  backdrop-filter: blur(8px) saturate(120%);
+  
   border-bottom: 1px solid rgba(15,27,45,0.06);
 }
 .dark .nav-glass {

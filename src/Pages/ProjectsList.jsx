@@ -1,7 +1,481 @@
-import { useEffect, useState, useRef } from "react";
-import { FaArrowRight, FaRocket } from "react-icons/fa";
-import { FaTimes } from "react-icons/fa";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { FaRocket, FaTimes } from "react-icons/fa";
 import localData from "../../db.json";
+
+const API_BASE = import.meta.env.VITE_PROJECTS_API_URL;
+
+const STATUS_FILTERS = [
+  { key: "all", label: "Tous" },
+  { key: "online", label: "En ligne" },
+  { key: "in-progress", label: "En cours" },
+  { key: "offline", label: "Hors ligne" },
+];
+
+const STATUS_STYLES = {
+  online: { color: "var(--accent-2)", label: "En ligne" },
+  "in-progress": { color: "var(--accent-3)", label: "En cours" },
+  offline: { color: "var(--ink-muted)", label: "Hors ligne" },
+};
+
+/** Alterne les 3 accents de la palette pour un rendu vif et cohérent. */
+const ACCENTS = ["var(--accent)", "var(--accent-2)", "var(--accent-3)"];
+const accentFor = (index) => ACCENTS[index % ACCENTS.length];
+
+function toTechArray(techStack) {
+  if (Array.isArray(techStack)) return techStack;
+  if (typeof techStack === "string") {
+    return techStack.split(",").map((tech) => tech.trim());
+  }
+  return [];
+}
+
+/** Choisit le projet à mettre en avant : mot-clé "smart" en priorité, sinon le premier. */
+function pickFeatured(projects) {
+  const smart = projects.find(
+    (p) =>
+      (p.title || "").toLowerCase().includes("smart") ||
+      (p.description || "").toLowerCase().includes("smart city"),
+  );
+  return smart || projects[0] || null;
+}
+
+function matchesFilters(project, status, search) {
+  const statusOk = status === "all" || project.status === status;
+  if (!statusOk) return false;
+
+  const query = search.trim().toLowerCase();
+  if (!query) return true;
+
+  return toTechArray(project.techStack).some((tech) =>
+    tech.toLowerCase().includes(query),
+  );
+}
+
+async function fetchProjects() {
+  if (!API_BASE) {
+    const data = Array.isArray(localData.projects) ? localData.projects : [];
+    return data.filter((p) => p.status !== "archived");
+  }
+
+  const response = await fetch(`${API_BASE}/projects`);
+  if (!response.ok) throw new Error("Erreur serveur lors de la récupération");
+
+  const data = await response.json();
+  return data.filter((p) => p.status !== "archived");
+}
+
+/** Gère le focus trap, l'échappement au clavier et le scroll de fond pendant qu'une modale est ouverte. */
+function useModalBehavior(isOpen, { modalRef, backgroundRef, onClose }) {
+  const lastActiveRef = useRef(null);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+
+    lastActiveRef.current = document.activeElement;
+    backgroundRef.current?.setAttribute("aria-hidden", "true");
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const focusableSelector =
+      'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
+    const focusable = modalRef.current.querySelectorAll(focusableSelector);
+    focusable[0]?.focus();
+
+    function handleKeyDown(event) {
+      if (event.key === "Escape") {
+        onClose();
+        event.preventDefault();
+        return;
+      }
+      if (event.key !== "Tab") return;
+
+      const visibleFocusable = Array.from(focusable).filter(
+        (el) => el.offsetParent !== null,
+      );
+      if (visibleFocusable.length === 0) return;
+
+      const first = visibleFocusable[0];
+      const last = visibleFocusable[visibleFocusable.length - 1];
+
+      if (!event.shiftKey && document.activeElement === last) {
+        first.focus();
+        event.preventDefault();
+      }
+      if (event.shiftKey && document.activeElement === first) {
+        last.focus();
+        event.preventDefault();
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = previousOverflow || "";
+      backgroundRef.current?.removeAttribute("aria-hidden");
+      lastActiveRef.current?.focus();
+    };
+  }, [isOpen, modalRef, backgroundRef, onClose]);
+}
+
+function LoadingState() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-[var(--bg)]">
+      <div className="h-10 w-10 animate-spin rounded-full border-2 border-[var(--line-strong)] border-t-[var(--accent)]" />
+    </div>
+  );
+}
+
+function PageHeader() {
+  return (
+    <header className="mb-16 max-w-2xl">
+      <h1 className="text-4xl font-bold tracking-tight text-[var(--ink)] sm:text-5xl md:text-6xl">
+        Projets
+      </h1>
+      <p className="mt-4 text-base leading-relaxed text-[var(--ink-muted)] sm:text-lg">
+        Une sélection d'applications conçues et développées de bout en bout,
+        du prototype à la mise en production.
+      </p>
+    </header>
+  );
+}
+
+function StatusFilters({ value, onChange }) {
+  return (
+    <div
+      className="flex flex-wrap items-center gap-2"
+      role="group"
+      aria-label="Filtrer par statut"
+    >
+      {STATUS_FILTERS.map((status) => {
+        const isActive = value === status.key;
+        return (
+          <button
+            key={status.key}
+            type="button"
+            onClick={() => onChange(status.key)}
+            aria-pressed={isActive}
+            className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
+              isActive
+                ? "border-[var(--accent)] bg-[var(--accent)] text-white"
+                : "border-[var(--line)] bg-transparent text-[var(--ink-muted)] hover:border-[var(--accent)]/50 hover:text-[var(--ink)]"
+            }`}
+          >
+            {status.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function TechSearchInput({ value, onChange }) {
+  return (
+    <div className="relative w-full sm:w-72">
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Rechercher une techno — React, Flask…"
+        aria-label="Rechercher une technologie"
+        className="w-full rounded-full border border-[var(--line)] bg-transparent px-4 py-2 text-sm text-[var(--ink)] outline-none transition-colors placeholder:text-[var(--ink-muted)] focus:border-[var(--accent-2)]"
+      />
+      {value && (
+        <button
+          type="button"
+          onClick={() => onChange("")}
+          aria-label="Effacer la recherche"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--ink-muted)] hover:text-[var(--ink)]"
+        >
+          <FaTimes size={12} />
+        </button>
+      )}
+    </div>
+  );
+}
+
+function TechChips({ techStack }) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {toTechArray(techStack).map((tech, index) => (
+        <span
+          key={tech}
+          className="rounded-full border px-3 py-1 text-xs font-medium"
+          style={{
+            borderColor: accentFor(index),
+            color: accentFor(index),
+          }}
+        >
+          {tech.trim()}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function StatusBadge({ status }) {
+  const config = STATUS_STYLES[status] || {
+    color: "var(--ink-muted)",
+    label: "Publié",
+  };
+
+  return (
+    <span
+      className="inline-flex items-center gap-1.5 text-xs font-medium"
+      style={{ color: config.color }}
+    >
+      <span
+        className="h-1.5 w-1.5 rounded-full"
+        style={{ backgroundColor: config.color }}
+      />
+      {config.label}
+    </span>
+  );
+}
+
+function FeaturedProject({ project, onShowDetails }) {
+  if (!project) return null;
+
+  return (
+    <div className="mb-10 rounded-3xl border border-[var(--line)] bg-[var(--surface)] p-8 md:p-10">
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium text-[var(--accent)]">
+              Projet phare
+            </p>
+            <h2 className="mt-2 text-3xl font-bold text-[var(--ink)]">
+              {project.title}
+            </h2>
+          </div>
+          <StatusBadge status={project.status} />
+        </div>
+
+        <p className="max-w-3xl text-base leading-relaxed text-[var(--ink-muted)]">
+          {project.description}
+        </p>
+
+        <TechChips techStack={project.techStack} />
+
+        <div className="flex flex-wrap items-center gap-3 pt-2">
+          {project.liveUrl && (
+            <a
+              href={project.liveUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-full bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+            >
+              Voir en ligne
+            </a>
+          )}
+          <button
+            type="button"
+            onClick={() => onShowDetails(project)}
+            className="rounded-full border border-[var(--line-strong)] px-5 py-2.5 text-sm font-semibold text-[var(--ink)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+          >
+            Voir les détails
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProjectCard({ project, index, onSelect }) {
+  const techArray = toTechArray(project.techStack);
+  const cover = project.image || project.images?.[0] || "";
+
+  function selectProject() {
+    onSelect(project);
+  }
+
+  return (
+    <article
+      onClick={selectProject}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          selectProject();
+        }
+      }}
+      role="button"
+      tabIndex={0}
+      className="group flex flex-col overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface)] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] hover:border-[var(--line-strong)]"
+    >
+      <div className="relative aspect-[16/10] overflow-hidden bg-[var(--surface-3)]">
+        {cover ? (
+          <img
+            src={cover}
+            alt={project.title}
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-[var(--line-strong)]">
+            <FaRocket size={26} />
+          </div>
+        )}
+      </div>
+
+      <div className="flex flex-1 flex-col gap-4 p-6">
+        <div className="flex items-start justify-between gap-3">
+          <h2 className="text-lg font-semibold text-[var(--ink)]">
+            {project.title}
+          </h2>
+          <StatusBadge status={project.status} />
+        </div>
+
+        <p className="line-clamp-3 text-sm leading-relaxed text-[var(--ink-muted)]">
+          {project.description}
+        </p>
+
+        <div className="mt-auto flex flex-wrap gap-2 pt-1">
+          {techArray.slice(0, 4).map((tech, techIndex) => (
+            <span
+              key={tech}
+              className="rounded-full border px-2.5 py-1 text-[11px] font-medium"
+              style={{
+                borderColor: accentFor(techIndex),
+                color: accentFor(techIndex),
+              }}
+            >
+              {tech}
+            </span>
+          ))}
+          {techArray.length > 4 && (
+            <span className="rounded-full px-2.5 py-1 text-[11px] font-medium text-[var(--ink-muted)]">
+              +{techArray.length - 4}
+            </span>
+          )}
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function ProjectGrid({ projects, onSelect }) {
+  return (
+    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {projects.map((project, index) => (
+        <ProjectCard
+          key={project.id}
+          project={project}
+          index={index}
+          onSelect={onSelect}
+        />
+      ))}
+    </div>
+  );
+}
+
+function EmptyState({ isFiltered }) {
+  return (
+    <div className="rounded-2xl border border-dashed border-[var(--line)] py-20 text-center">
+      <p className="text-[var(--ink-muted)]">
+        {isFiltered
+          ? "Aucun projet ne correspond à ces critères."
+          : "Aucun projet déployé pour le moment."}
+      </p>
+    </div>
+  );
+}
+
+function ErrorState({ message }) {
+  return (
+    <div className="rounded-2xl border border-dashed border-[var(--accent)]/30 py-20 text-center">
+      <p className="text-sm font-medium text-[var(--accent)]">{message}</p>
+    </div>
+  );
+}
+
+function ProjectModal({ project, onClose, backgroundRef }) {
+  const modalRef = useRef(null);
+
+  useModalBehavior(Boolean(project), { modalRef, backgroundRef, onClose });
+
+  if (!project) return null;
+
+  const role =
+    project.role ||
+    (project.title.includes("Smart")
+      ? "Full-Stack + IA"
+      : "Full-Stack + Microservices");
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        className="max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-6 shadow-2xl md:p-8"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-title"
+        ref={modalRef}
+        tabIndex={-1}
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2
+              id="modal-title"
+              className="text-2xl font-bold text-[var(--ink)]"
+            >
+              {project.title}
+            </h2>
+            <p className="mt-2 text-sm text-[var(--ink-muted)]">
+              {project.description}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--line-strong)] text-[var(--ink)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+            aria-label="Fermer la fenêtre de détails"
+          >
+            <FaTimes />
+          </button>
+        </div>
+
+        <div className="mt-8 grid gap-8 md:grid-cols-2">
+          <div>
+            <h3 className="text-sm font-semibold text-[var(--accent-2)]">
+              Contexte & rôle
+            </h3>
+            <p className="mt-2 text-sm text-[var(--ink-muted)]">{role}</p>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-semibold text-[var(--accent-2)]">
+              Fonctionnalités
+            </h3>
+            <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-[var(--ink-muted)]">
+              {(project.features || []).map((feature) => (
+                <li key={feature}>{feature}</li>
+              ))}
+            </ul>
+
+            <h3 className="mt-5 text-sm font-semibold text-[var(--accent-2)]">
+              Technologies
+            </h3>
+            <div className="mt-2">
+              <TechChips techStack={project.techStack} />
+            </div>
+          </div>
+        </div>
+
+        {project.distinction && (
+          <div className="mt-6 border-t border-[var(--line)] pt-4 text-sm text-[var(--ink-muted)]">
+            <span className="font-semibold text-[var(--accent-3)]">
+              Distinction —{" "}
+            </span>
+            {project.distinction}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 const ProjectsList = () => {
   const [projects, setProjects] = useState([]);
@@ -12,415 +486,76 @@ const ProjectsList = () => {
   const [selectedProject, setSelectedProject] = useState(null);
   const [featured, setFeatured] = useState(null);
 
-  // RÉCUPÉRATION DE L'URL DE BASE DEPUIS .env.local (Vite)
-  const API_BASE = import.meta.env.VITE_PROJECTS_API_URL;
+  const mainRef = useRef(null);
 
   useEffect(() => {
     async function loadProjects() {
       setLoading(true);
       setError(null);
-
-      // Fallback local: si aucune API distante n'est configurée, utiliser le fichier db.json
-      if (!API_BASE) {
-        try {
-          const data =
-            localData && Array.isArray(localData.projects)
-              ? localData.projects
-              : [];
-          const visibleProjects = data.filter((p) => p.status !== "archived");
-          setProjects(visibleProjects);
-          // Définir un projet mis en avant: recherche par mot-clé 'smart' ou fallback
-          const smart = visibleProjects.find(
-            (p) =>
-              (p.title || "").toLowerCase().includes("smart") ||
-              (p.description || "").toLowerCase().includes("smart city"),
-          );
-          setFeatured(smart || visibleProjects[0] || null);
-        } catch (err) {
-          console.error("Erreur lecture locale projects:", err);
-          setError("Impossible de charger la galerie de projets (local).");
-        } finally {
-          setLoading(false);
-        }
-        return;
-      }
-
       try {
-        const res = await fetch(`${API_BASE}/projects`);
-        if (!res.ok) throw new Error("Erreur serveur lors de la récupération");
-
-        const data = await res.json();
-
-        // Filtrage : on ne montre pas les projets archivés
-        const visibleProjects = data.filter((p) => p.status !== "archived");
+        const visibleProjects = await fetchProjects();
         setProjects(visibleProjects);
-        const smart = visibleProjects.find(
-          (p) =>
-            (p.title || "").toLowerCase().includes("smart") ||
-            (p.description || "").toLowerCase().includes("smart city"),
-        );
-        setFeatured(smart || visibleProjects[0] || null);
+        setFeatured(pickFeatured(visibleProjects));
       } catch (err) {
-        console.error("Erreur List:", err);
+        console.error("Erreur chargement projets:", err);
         setError("Impossible de charger la galerie de projets.");
       } finally {
         setLoading(false);
       }
     }
     loadProjects();
-  }, [API_BASE]);
-
-  useEffect(() => {
-    const onKey = (e) => {
-      if (e.key === "Escape") setSelectedProject(null);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // Refs for modal focus management
-  const modalRef = useRef(null);
-  const lastActiveRef = useRef(null);
-  const mainRef = useRef(null);
+  const filteredProjects = useMemo(
+    () =>
+      projects.filter((project) =>
+        matchesFilters(project, filterStatus, techSearch),
+      ),
+    [projects, filterStatus, techSearch],
+  );
 
-  useEffect(() => {
-    if (selectedProject) {
-      // store last active element
-      lastActiveRef.current = document.activeElement;
-      // hide background from assistive tech
-      if (mainRef.current) mainRef.current.setAttribute("aria-hidden", "true");
-      // prevent background scroll
-      const prev = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
+  const isFiltered = filterStatus !== "all" || techSearch.trim() !== "";
 
-      // focus first focusable in modal
-      const focusable = modalRef.current.querySelectorAll(
-        'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])',
-      );
-      const first = focusable[0];
-      if (first) first.focus();
-
-      const trap = (e) => {
-        if (e.key === "Escape") {
-          setSelectedProject(null);
-          e.preventDefault();
-          return;
-        }
-        if (e.key === "Tab") {
-          // focus trap
-          const focusableEls = Array.from(focusable).filter(
-            (el) => el.offsetParent !== null,
-          );
-          if (focusableEls.length === 0) return;
-          const firstEl = focusableEls[0];
-          const lastEl = focusableEls[focusableEls.length - 1];
-          if (!e.shiftKey && document.activeElement === lastEl) {
-            firstEl.focus();
-            e.preventDefault();
-          }
-          if (e.shiftKey && document.activeElement === firstEl) {
-            lastEl.focus();
-            e.preventDefault();
-          }
-        }
-      };
-
-      window.addEventListener("keydown", trap);
-
-      return () => {
-        window.removeEventListener("keydown", trap);
-        document.body.style.overflow = prev || "";
-        if (mainRef.current) mainRef.current.removeAttribute("aria-hidden");
-        // restore focus
-        lastActiveRef.current?.focus();
-      };
-    }
-  }, [selectedProject]);
-
-  if (loading)
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-[var(--accent)]/20 border-t-[var(--accent)] rounded-full animate-spin"></div>
-      </div>
-    );
+  if (loading) return <LoadingState />;
 
   return (
-    <section className="min-h-screen bg-grid text-[var(--ink)] py-32 px-6 relative overflow-hidden">
-      {/* Effets de lumière en arrière-plan */}
-      <div className="hidden sm:block absolute top-0 left-1/2 -translate-x-1/2 w-[600px] md:w-[1000px] h-[320px] md:h-[600px] bg-blue-600/5 rounded-full blur-[120px] -z-0" />
-
-      <div className="max-w-7xl mx-auto relative z-10" ref={mainRef}>
-        <header className="mb-20 space-y-4">
-          <div className="flex items-center gap-3">
-            <span className="h-[1px] w-12 bg-blue-500"></span>
-            <span className="text-blue-500 font-mono tracking-[0.3em] uppercase text-xs">
-              Portfolio
-            </span>
-          </div>
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black italic tracking-tighter uppercase leading-none">
-            Projets <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[rgba(15,27,45,0.9)] to-[var(--accent)]">
-              Sélectionnés.
-            </span>
-          </h1>
-        </header>
+    <section className="min-h-screen bg-[var(--bg)] px-6 py-24 text-[var(--ink)] sm:py-32">
+      <div id="projects-main" className="mx-auto max-w-7xl" ref={mainRef}>
+        <PageHeader />
 
         {error ? (
-          <div className="text-center py-20 border border-dashed border-red-500/20 rounded-[3rem]">
-            <p className="text-red-400 font-mono uppercase tracking-widest text-sm">
-              {error}
-            </p>
-          </div>
+          <ErrorState message={error} />
         ) : (
           <>
-            {/* CONTROLS */}
-            <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div className="flex items-center gap-3">
-                {["all", "online", "in-progress", "offline"].map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => setFilterStatus(s)}
-                    className={`px-3 py-2 text-xs font-mono uppercase tracking-widest border rounded-full ${filterStatus === s ? "bg-blue-500 text-white border-blue-500" : "bg-transparent text-zinc-400 border-white/5"}`}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-
-              <div className="flex items-center gap-3">
-                <input
-                  value={techSearch}
-                  onChange={(e) => setTechSearch(e.target.value)}
-                  placeholder="Rechercher une techno (React, Flask...)"
-                  className="px-4 py-2 bg-transparent border border-white/5 rounded-md text-sm"
-                />
-              </div>
+            <div className="mb-10 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <StatusFilters value={filterStatus} onChange={setFilterStatus} />
+              <TechSearchInput value={techSearch} onChange={setTechSearch} />
             </div>
 
-            {/* FEATURED */}
-            {featured && (
-              <div className="mb-8 border border-[var(--line)] rounded-2xl bg-[var(--surface)] p-6 md:p-8">
-                <div className="flex flex-col gap-5">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <p className="text-xs font-mono uppercase tracking-[0.2em] text-[var(--accent)]">
-                        Projet mis en avant
-                      </p>
-                      <h2 className="text-3xl font-black mt-2">
-                        {featured.title}
-                      </h2>
-                    </div>
-                    <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-green-500/20 bg-green-500/10 text-green-400">
-                      {featured.status || "Publié"}
-                    </span>
-                  </div>
-                  <p className="max-w-4xl text-zinc-400 leading-relaxed">
-                    {featured.description}
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {(Array.isArray(featured.techStack)
-                      ? featured.techStack
-                      : (featured.techStack || "").split(",")
-                    ).map((tech, index) => (
-                      <span key={index} className="tech-chip">
-                        {tech.trim()}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="flex flex-wrap items-center gap-4">
-                    {featured.liveUrl && (
-                      <a
-                        href={featured.liveUrl}
-                        className="px-4 py-2 btn-primary rounded-md text-sm"
-                      >
-                        Voir en ligne
-                      </a>
-                    )}
-                    <button
-                      onClick={() => setSelectedProject(featured)}
-                      className="px-4 py-2 btn-ghost rounded-md text-sm"
-                    >
-                      Détails
-                    </button>
-                  </div>
-                </div>
-              </div>
+            {!isFiltered && (
+              <FeaturedProject
+                project={featured}
+                onShowDetails={setSelectedProject}
+              />
             )}
 
-            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-              {projects.map((project, idx) => {
-                // --- SÉCURISATION DU TECHSTACK ---
-                // On s'assure que techArray est toujours un tableau pour éviter le crash .map()
-                let techArray = [];
-                if (Array.isArray(project.techStack)) {
-                  techArray = project.techStack;
-                } else if (typeof project.techStack === "string") {
-                  techArray = project.techStack.split(",").map((t) => t.trim());
-                }
-
-                return (
-                  <div
-                    key={project.id}
-                    onClick={() => setSelectedProject(project)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ")
-                        setSelectedProject(project);
-                    }}
-                    role="button"
-                    tabIndex={0}
-                    className="group relative card overflow-hidden hover:border-[var(--accent)]/50 transition-all duration-500 backdrop-blur-sm animate-rise cursor-pointer"
-                    style={{ animationDelay: `${idx * 80}ms` }}
-                  >
-                    <div className="project-idx">
-                      #{String(idx + 1).padStart(2, "0")}
-                    </div>
-                    <div className="project-category">
-                      {project.id === "smartcity"
-                        ? "Projet principal"
-                        : "Projet"}
-                    </div>
-                    {/* Contenu textuel */}
-                    <div className="p-6 md:p-8 space-y-4 relative">
-                      <div className="flex items-start justify-between gap-4">
-                        <h2 className="text-2xl font-bold tracking-tight group-hover:text-[var(--accent)] transition-colors">
-                          {project.title}
-                        </h2>
-                        <span
-                          className={`shrink-0 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${
-                            project.status === "online"
-                              ? "bg-green-500/10 border-green-500/20 text-green-400"
-                              : "bg-blue-500/10 border-blue-500/20 text-blue-400"
-                          }`}
-                        >
-                          {project.status || "Publié"}
-                        </span>
-                      </div>
-
-                      <p className="text-[var(--muted-2)] text-sm leading-relaxed line-clamp-3 font-medium">
-                        {project.description}
-                      </p>
-
-                      {/* Tags de Tech Stack (Affichage sécurisé) */}
-                      <div className="flex flex-wrap gap-2 pt-2">
-                        {techArray.map((tech, index) => (
-                          <span key={index} className="tech-chip" title={tech}>
-                            {tech}
-                          </span>
-                        ))}
-                      </div>
-
-                      <div className="pt-6 flex items-center justify-between border-t border-[var(--line)]">
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--muted-2)] flex items-center gap-2">
-                          Détails{" "}
-                          <FaArrowRight className="group-hover:translate-x-2 transition-transform" />
-                        </span>
-                        <div className="w-9 h-9 rounded-full bg-[var(--surface-2)] flex items-center justify-center group-hover:bg-[var(--accent)] transition-colors">
-                          <FaRocket
-                            size={12}
-                            className="group-hover:text-white text-[var(--muted-2)]"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            {filteredProjects.length === 0 ? (
+              <EmptyState isFiltered={isFiltered} />
+            ) : (
+              <ProjectGrid
+                projects={filteredProjects}
+                onSelect={setSelectedProject}
+              />
+            )}
           </>
-        )}
-
-        {!loading && projects.length === 0 && !error && (
-          <div className="text-center py-20 border border-dashed border-[var(--line)] rounded-2xl">
-            <p className="text-zinc-500 font-mono uppercase tracking-widest">
-              Aucun projet déployé pour le moment.
-            </p>
-          </div>
         )}
       </div>
 
-      {/* PROJECT MODAL */}
-      {selectedProject && (
-        <div
-          className="modal-backdrop"
-          onMouseDown={(e) => {
-            if (e.target.classList.contains("modal-backdrop"))
-              setSelectedProject(null);
-          }}
-        >
-          <div
-            className="modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="modal-title"
-            ref={modalRef}
-            tabIndex={-1}
-          >
-            <div className="flex items-start justify-between">
-              <div>
-                <h2 id="modal-title" className="text-2xl font-bold">
-                  {selectedProject.title}
-                </h2>
-                <p className="text-sm text-[var(--muted-2)] mt-2">
-                  {selectedProject.description}
-                </p>
-              </div>
-              <button
-                onClick={() => setSelectedProject(null)}
-                className="btn-ghost"
-                aria-label="Fermer la fenêtre de détails"
-              >
-                <FaTimes />
-              </button>
-            </div>
-
-            <div className="mt-6 grid md:grid-cols-2 gap-6">
-              <div>
-                <h4 className="font-display text-lg font-semibold">
-                  Contexte & Rôle
-                </h4>
-                <p className="text-[var(--muted-2)] text-sm mt-2">
-                  {selectedProject.role ||
-                    (selectedProject.title.includes("Smart")
-                      ? "Full-Stack + IA"
-                      : "Full-Stack + Microservices")}
-                </p>
-              </div>
-
-              <div>
-                <h4 className="font-display text-lg font-semibold">
-                  Fonctionnalités
-                </h4>
-                <ul className="list-disc list-inside mt-2 text-[var(--muted-2)]">
-                  {(selectedProject.features || []).map((f, i) => (
-                    <li key={i}>{f}</li>
-                  ))}
-                </ul>
-
-                <h4 className="font-display text-lg font-semibold mt-4">
-                  Technologies
-                </h4>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {(Array.isArray(selectedProject.techStack)
-                    ? selectedProject.techStack
-                    : (selectedProject.techStack || "").split(",")
-                  ).map((t, i) => (
-                    <span key={i} className="tech-chip">
-                      {t}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {selectedProject.distinction && (
-              <div className="mt-6 border-t pt-4 text-sm text-[var(--muted-2)]">
-                <strong>Distinction: </strong>
-                {selectedProject.distinction}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      <ProjectModal
+        project={selectedProject}
+        onClose={() => setSelectedProject(null)}
+        backgroundRef={mainRef}
+      />
     </section>
   );
 };
