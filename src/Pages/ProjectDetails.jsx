@@ -19,7 +19,7 @@ const ProjectDetails = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const API_URL = import.meta.env.VITE_API_URL;
+  const API_URL = import.meta.env.VITE_PROJECTS_API_URL;
 
   useEffect(() => {
     async function loadProject() {

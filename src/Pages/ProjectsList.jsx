@@ -13,7 +13,7 @@ const ProjectsList = () => {
   const [featured, setFeatured] = useState(null);
 
   // RÉCUPÉRATION DE L'URL DE BASE DEPUIS .env.local (Vite)
-  const API_BASE = import.meta.env.VITE_API_URL;
+  const API_BASE = import.meta.env.VITE_PROJECTS_API_URL;
 
   useEffect(() => {
     async function loadProjects() {
