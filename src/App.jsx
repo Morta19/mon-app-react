@@ -22,6 +22,7 @@ import AdminFormSubmissions from "./admin/AdminFormSubmissions.jsx";
 import ProjectsAdminPage from "./admin/ProjectsAdminPage.jsx"; // La version complète
 import Login from "./auth/Login.jsx";
 import Logout from "./auth/Logout.jsx";
+import AIAgent from "./components/AIAgent.jsx";
 
 import AdminProjects from "./admin/projects.jsx";
 
@@ -54,6 +55,7 @@ function App() {
 
   return (
     <ThemeProvider>
+      <AIAgent />
       <Routes>
         {/* --- PAGES PUBLIQUES --- */}
         <Route path="/" element={<Layout />}>
